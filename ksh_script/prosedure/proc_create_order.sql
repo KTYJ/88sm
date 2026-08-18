@@ -37,31 +37,48 @@ AS TABLE OF order_item_type;
 /
 
 CREATE OR REPLACE PROCEDURE proc_place_order (
-    p_member_id        IN  member.member_id%TYPE,
-    p_staff_id         IN  staff.staff_id%TYPE,
-    p_branch_id        IN  branch.branch_id%TYPE,
-    p_order_type       IN  orders.order_type%TYPE,
-    p_items            IN  order_item_list,
-    p_voucher_applied  IN  NUMBER DEFAULT 0
+    p_member_id  IN  member.member_id%TYPE,
+    p_staff_id   IN  staff.staff_id%TYPE, 
+    p_branch_id  IN  branch.branch_id%TYPE,
+    p_order_type IN  orders.order_type%TYPE,
+    p_items      IN  order_item_list,      --the custom ADT, any number of (item_id, quantity) lines
+    p_voucher_id IN  voucher.voucher_id%TYPE DEFAULT NULL  -- optional voucher
 ) IS
-    v_order_id           orders.order_id%TYPE;
-    v_stock              branch_stock.stock_quantity%TYPE;
-    v_total_after_discount NUMBER(10,2);
-    v_point_id           point_history.point_redemption_id%TYPE;
+    v_order_id      orders.order_id%TYPE;
+    v_stock         branch_stock.stock_quantity%TYPE;
+    v_pickup_id     self_pickup.pickup_id%TYPE;
+    v_use_voucher   NUMBER := 0;
 
     e_insufficient_stock EXCEPTION;
     e_empty_order        EXCEPTION;
-
+    e_member_required    EXCEPTION;
 BEGIN
     IF p_items IS NULL OR p_items.COUNT = 0 THEN
         RAISE e_empty_order;
     END IF;
 
-    -- Validate stock before inserting anything
+    -- =========================================================================
+    -- Voucher pre-fetch (type + value needed for discount calc later)
+    -- Full validation (expiry, one-use) delegated to sp_redeem_voucher
+    -- =========================================================================
+    IF p_voucher_id IS NOT NULL THEN
+        -- Voucher redemption requires a member
+        IF p_member_id IS NULL THEN
+            RAISE e_member_required;
+        END IF;
+
+        v_use_voucher := 1;
+    END IF;
+
+    -- =========================================================================
+    -- Pass 1: validate and lock stock for every line before inserting anything
+    -- =========================================================================
     FOR i IN 1 .. p_items.COUNT LOOP
-        SELECT stock_quantity INTO v_stock
+        SELECT stock_quantity
+        INTO   v_stock
         FROM   branch_stock
-        WHERE  branch_id = p_branch_id AND item_id = p_items(i).item_id
+        WHERE  branch_id = p_branch_id
+          AND  item_id = p_items(i).item_id
         FOR UPDATE;
 
         IF v_stock < p_items(i).quantity THEN
@@ -69,31 +86,64 @@ BEGIN
         END IF;
     END LOOP;
 
-    SELECT NVL(MAX(order_id), 0) + 1 INTO v_order_id FROM orders;
+    SELECT NVL(MAX(order_id), 0) + 1
+    INTO   v_order_id
+    FROM   orders;
 
     INSERT INTO orders (order_id, member_id, staff_id, branch_id, order_date, order_type)
     VALUES (v_order_id, p_member_id, p_staff_id, p_branch_id, SYSDATE, p_order_type);
 
-    -- Delegate item insertion and per-item calculation to the dedicated procedure
+    IF p_order_type = 'Self Pickup' THEN
+        SELECT NVL(MAX(pickup_id), 0) + 1
+        INTO   v_pickup_id
+        FROM   self_pickup;
+
+        INSERT INTO self_pickup (
+            pickup_id,
+            order_id,
+            pickup_datetime,
+            pickup_status,
+            pickup_exp_date
+        ) VALUES (
+            v_pickup_id,
+            v_order_id, 
+            NULL,                              -- not picked up yet
+            'Preparing',                       -- default initial status
+            NULL                               -- expiry date set when status becomes Ready
+        );
+    END IF;
+
+    IF p_voucher_id IS NOT NULL THEN
+        sp_redeem_voucher(p_voucher_id, v_order_id, p_member_id);
+    END IF;
+
     sp_create_order_items(
         p_order_id    => v_order_id,
         p_order_items => p_items,
-        p_use_voucher => p_voucher_applied
+        p_use_voucher => v_use_voucher
     );
 
-    DBMS_OUTPUT.PUT_LINE('Order ' || v_order_id || ' placed with ' || p_items.COUNT ||
-                          ' item line(s).');
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('Order ' || v_order_id || ' placed with ' || p_items.COUNT || ' item line(s).');
 
 EXCEPTION
     WHEN e_empty_order THEN
         ROLLBACK;
         RAISE_APPLICATION_ERROR(-20006, 'Order must contain at least one item.');
+    WHEN e_member_required THEN
+        ROLLBACK;
+        RAISE_APPLICATION_ERROR(-20009, 'A member ID is required to redeem a voucher.');
     WHEN e_insufficient_stock THEN
         ROLLBACK;
         RAISE_APPLICATION_ERROR(-20001,
             'Insufficient stock for one or more items at branch ' || p_branch_id || '.');
+    WHEN NO_DATA_FOUND THEN
+        ROLLBACK;
+        RAISE_APPLICATION_ERROR(-20002,
+            'Invalid item/branch/voucher - no matching record found.');
     WHEN OTHERS THEN
         ROLLBACK;
         RAISE;
 END;
 /
+ 
