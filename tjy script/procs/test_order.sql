@@ -59,9 +59,11 @@ BEGIN
         DBMS_OUTPUT.PUT_LINE('  EXEC test_create_order(3);  -- TEST 3: Insufficient stock (should fail)');
         DBMS_OUTPUT.PUT_LINE('  EXEC test_create_order(4);  -- TEST 4: Empty order items (should fail)');
         DBMS_OUTPUT.PUT_LINE('  EXEC test_create_order(5);  -- TEST 5: Invalid item / Missing stock row (should fail)');
-        DBMS_OUTPUT.PUT_LINE('  EXEC test_create_order(6);  -- TEST 6: Guest attempts to use voucher (should fail)');
+        DBMS_OUTPUT.PUT_LINE('  EXEC test_create_order(6);  -- TEST 6: Guest to use voucher (should fail)');
         DBMS_OUTPUT.PUT_LINE('  EXEC test_create_order(7);  -- TEST 7: Expired voucher (should fail)');
         DBMS_OUTPUT.PUT_LINE('  EXEC test_create_order(8);  -- TEST 8: Voucher already redeemed (should fail)');
+        DBMS_OUTPUT.PUT_LINE('  EXEC test_create_order(9);  -- TEST 9: Guest Delivery order (should fail)');
+        DBMS_OUTPUT.PUT_LINE('  EXEC test_create_order(10); -- TEST 10: Guest Self Pickup order (should fail)');
         DBMS_OUTPUT.PUT_LINE('============================================================================');
         RETURN;
     END IF;
@@ -244,6 +246,42 @@ BEGIN
         EXCEPTION
             WHEN OTHERS THEN
                 DBMS_OUTPUT.PUT_LINE('Test 8 Passed with expected error: ' || SQLERRM);
+        END;
+        cleanup_test_data();
+    END IF;
+
+    -- ============================================================================
+    -- TEST 9: Guest Delivery Failure (Guest restricted to In Store only)
+    -- ============================================================================
+    IF p_test_case IN (0, 9) THEN
+        DBMS_OUTPUT.PUT_LINE(CHR(10) || '=== TEST 9: Guest attempts Delivery order (should fail) ===');
+        cleanup_test_data();
+        setup_base_data();
+
+        BEGIN
+            proc_place_order(NULL, 9001, 9001, 'Delivery', order_item_list(order_item_type('PT001', 1)));
+            DBMS_OUTPUT.PUT_LINE('Test 9 Failed: Should have raised guest in-store only error.');
+        EXCEPTION
+            WHEN OTHERS THEN
+                DBMS_OUTPUT.PUT_LINE('Test 9 Passed with expected error: ' || SQLERRM);
+        END;
+        cleanup_test_data();
+    END IF;
+
+    -- ============================================================================
+    -- TEST 10: Guest Self Pickup Failure (Guest restricted to In Store only)
+    -- ============================================================================
+    IF p_test_case IN (0, 10) THEN
+        DBMS_OUTPUT.PUT_LINE(CHR(10) || '=== TEST 10: Guest attempts Self Pickup order (should fail) ===');
+        cleanup_test_data();
+        setup_base_data();
+
+        BEGIN
+            proc_place_order(NULL, 9001, 9001, 'Self Pickup', order_item_list(order_item_type('PT001', 1)));
+            DBMS_OUTPUT.PUT_LINE('Test 10 Failed: Should have raised guest in-store only error.');
+        EXCEPTION
+            WHEN OTHERS THEN
+                DBMS_OUTPUT.PUT_LINE('Test 10 Passed with expected error: ' || SQLERRM);
         END;
         cleanup_test_data();
     END IF;
