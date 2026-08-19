@@ -9,6 +9,29 @@ SET VERIFY OFF
 SET NULL '-'
 
 -- ------------------------------------------
+-- Helper views for this file's reports.
+-- Dropped again at the end of the script.
+-- ------------------------------------------
+CREATE OR REPLACE VIEW branch_stock_summary_view AS
+SELECT branch_id, SUM(stock_quantity) AS total_stock
+FROM branch_stock
+GROUP BY branch_id;
+
+CREATE OR REPLACE VIEW item_pair_frequency_view AS
+SELECT
+    oi1.item_id                  AS item_a,
+    ia.item_name                 AS item_a_name,
+    oi2.item_id                  AS item_b,
+    ib.item_name                 AS item_b_name,
+    COUNT(DISTINCT oi1.order_id) AS times_together
+FROM order_item oi1
+JOIN order_item oi2 ON oi1.order_id = oi2.order_id AND oi1.item_id < oi2.item_id
+JOIN item ia ON ia.item_id = oi1.item_id
+JOIN item ib ON ib.item_id = oi2.item_id
+GROUP BY oi1.item_id, ia.item_name, oi2.item_id, ib.item_name;
+
+
+-- ------------------------------------------
 -- 6.1 Stock report for a branch
 -- Current on-hand quantity for every item stocked at the
 -- given branch, flagged Low Stock when below threshold.
@@ -64,19 +87,38 @@ PROMPT ===================================================================
 
 SELECT *
 FROM (
-    SELECT
-        oi1.item_id            AS item_a,
-        ia.item_name           AS item_a_name,
-        oi2.item_id            AS item_b,
-        ib.item_name           AS item_b_name,
-        COUNT(DISTINCT oi1.order_id) AS times_together
-    FROM order_item oi1
-    JOIN order_item oi2 ON oi1.order_id = oi2.order_id AND oi1.item_id < oi2.item_id
-    JOIN item ia ON ia.item_id = oi1.item_id
-    JOIN item ib ON ib.item_id = oi2.item_id
-    GROUP BY oi1.item_id, ia.item_name, oi2.item_id, ib.item_name
+    SELECT *
+    FROM item_pair_frequency_view
     ORDER BY times_together DESC
 )
 WHERE ROWNUM <= 20;
 
 CLEAR COLUMNS
+
+
+-- ------------------------------------------
+-- 6.3 Total stock summary per branch
+-- Aggregates on-hand stock quantity across all items
+-- for each branch, using branch_stock_summary_view.
+-- ------------------------------------------
+COLUMN branch_id    HEADING 'Branch ID'    FORMAT 9999
+COLUMN branch_name  HEADING 'Branch Name'  FORMAT A30 TRUNCATE
+COLUMN total_stock  HEADING 'Total Stock'  FORMAT 999,999,999
+
+PROMPT
+PROMPT ===================================================================
+PROMPT QUERY 6.3: TOTAL STOCK SUMMARY PER BRANCH
+PROMPT ===================================================================
+
+SELECT
+    b.branch_id,
+    b.branch_name,
+    sv.total_stock
+FROM branch b
+JOIN branch_stock_summary_view sv ON sv.branch_id = b.branch_id
+ORDER BY sv.total_stock DESC;
+
+CLEAR COLUMNS
+
+DROP VIEW branch_stock_summary_view;
+DROP VIEW item_pair_frequency_view;
