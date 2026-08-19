@@ -101,3 +101,14 @@ BEGIN
     COMMIT;
 END proc_submit_procurement;
 /
+
+commit;
+
+--test
+SET SERVEROUTPUT ON;
+-- Demo 1: Transfer 5 units of BA001 from Branch 1001 to Branch 1002
+EXEC proc_transfer_stock(1001, 1002, 'BA001', 5);
+
+-- Demo 2: Procurement of 20 units of BEV001 for Branch 1001 from Supplier 5001
+EXEC proc_submit_procurement(1001, 'BEV001', 5001, 20, 3.50);
+

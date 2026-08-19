@@ -1,3 +1,15 @@
+CREATE OR REPLACE VIEW v_order_type_trend AS
+SELECT EXTRACT(YEAR FROM o.order_date)      AS sales_year,
+       o.order_type,
+       COUNT(DISTINCT o.order_id)           AS total_orders,
+       SUM(oi.quantity * oi.unit_price)     AS revenue,
+       ROUND(SUM(oi.quantity * oi.unit_price) /
+             COUNT(DISTINCT o.order_id), 2) AS avg_order_value,
+       COUNT(DISTINCT o.branch_id)          AS branches_served
+FROM   orders o
+JOIN   order_item oi ON o.order_id = oi.order_id
+GROUP  BY EXTRACT(YEAR FROM o.order_date), o.order_type;
+
 COLUMN item_id          FORMAT A10         HEADING 'ITEM ID';
 COLUMN item_name        FORMAT A30 TRUNCATED HEADING 'ITEM NAME';
 COLUMN category         FORMAT A14 TRUNCATED HEADING 'CATEGORY';

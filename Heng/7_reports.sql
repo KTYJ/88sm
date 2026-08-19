@@ -130,7 +130,7 @@ END proc_rpt_branch_stock_inout;
 
 -- ------------------------------------------
 -- Example usage:
--- SET SERVEROUTPUT ON SIZE UNLIMITED
--- EXEC proc_rpt_procurement_cmp;
--- EXEC proc_rpt_branch_stock_inout(1001);
+SET SERVEROUTPUT ON SIZE UNLIMITED
+EXEC proc_rpt_procurement_cmp;
+EXEC proc_rpt_branch_stock_inout(1001);
 -- ------------------------------------------
