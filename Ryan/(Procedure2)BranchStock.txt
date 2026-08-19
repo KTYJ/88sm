@@ -1,0 +1,140 @@
+-- ====================================================================
+-- PROCEDURE 2: Branch Stock Report
+-- Purpose: To display the current stock quantity of items
+--          available at a selected branch.
+-- ====================================================================
+
+SET SERVEROUTPUT ON;
+
+CREATE OR REPLACE PROCEDURE proc_branch_stock_report (
+    p_branch_id IN branch.branch_id%TYPE
+) AS
+
+    v_branch_name branch.branch_name%TYPE;
+    v_found       BOOLEAN := FALSE;
+
+    -- Custom exception
+    e_no_stock EXCEPTION;
+
+    CURSOR c_branch_stock IS
+        SELECT
+            bs.item_id,
+            i.item_name,
+            i.category,
+            i.unit_price,
+            bs.stock_quantity
+        FROM branch_stock bs
+        JOIN item i
+            ON bs.item_id = i.item_id
+        WHERE bs.branch_id = p_branch_id
+        ORDER BY i.item_name;
+
+    v_item_id        item.item_id%TYPE;
+    v_item_name      item.item_name%TYPE;
+    v_category       item.category%TYPE;
+    v_unit_price     item.unit_price%TYPE;
+    v_stock_quantity branch_stock.stock_quantity%TYPE;
+
+BEGIN
+
+    -- Check whether the branch exists
+    SELECT branch_name
+    INTO v_branch_name
+    FROM branch
+    WHERE branch_id = p_branch_id;
+
+    DBMS_OUTPUT.PUT_LINE(
+        '======================================================================'
+    );
+    DBMS_OUTPUT.PUT_LINE('BRANCH STOCK REPORT');
+    DBMS_OUTPUT.PUT_LINE(
+        '======================================================================'
+    );
+    DBMS_OUTPUT.PUT_LINE(
+        'Branch ID   : ' || p_branch_id
+    );
+    DBMS_OUTPUT.PUT_LINE(
+        'Branch Name : ' || v_branch_name
+    );
+    DBMS_OUTPUT.PUT_LINE(
+        '----------------------------------------------------------------------'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('Item ID', 12) ||
+        RPAD('Item Name', 32) ||
+        RPAD('Category', 18) ||
+        LPAD('Unit Price', 14) ||
+        LPAD('Stock', 10)
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('-', 12, '-') ||
+        RPAD('-', 32, '-') ||
+        RPAD('-', 18, '-') ||
+        RPAD('-', 14, '-') ||
+        RPAD('-', 10, '-')
+    );
+
+    -- Open cursor
+    OPEN c_branch_stock;
+
+    LOOP
+
+        FETCH c_branch_stock
+        INTO v_item_id,
+             v_item_name,
+             v_category,
+             v_unit_price,
+             v_stock_quantity;
+
+        EXIT WHEN c_branch_stock%NOTFOUND;
+
+        v_found := TRUE;
+
+        DBMS_OUTPUT.PUT_LINE(
+            RPAD(v_item_id, 12) ||
+            RPAD(SUBSTR(v_item_name, 1, 30), 32) ||
+            RPAD(SUBSTR(v_category, 1, 16), 18) ||
+            LPAD('RM ' || TO_CHAR(v_unit_price, '9990.00'), 14) ||
+            LPAD(TO_CHAR(v_stock_quantity), 10)
+        );
+
+    END LOOP;
+
+    CLOSE c_branch_stock;
+
+    -- Check whether the branch has any stock records
+    IF NOT v_found THEN
+        RAISE e_no_stock;
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE(
+        '======================================================================'
+    );
+
+EXCEPTION
+
+    -- Branch does not exist
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE(
+            'Error: Branch ' || p_branch_id || ' does not exist.'
+        );
+
+    -- Branch exists but has no stock records
+    WHEN e_no_stock THEN
+        DBMS_OUTPUT.PUT_LINE(
+            'Error: No stock records found for branch ' || p_branch_id || '.'
+        );
+
+    WHEN OTHERS THEN
+        IF c_branch_stock%ISOPEN THEN
+            CLOSE c_branch_stock;
+        END IF;
+
+        DBMS_OUTPUT.PUT_LINE(
+            'Error: ' || SQLERRM
+        );
+
+END;
+/

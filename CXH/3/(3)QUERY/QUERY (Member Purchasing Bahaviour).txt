@@ -1,0 +1,38 @@
+SELECT
+    member_id,
+    name,
+
+    total_orders,
+    different_items_purchased,
+    total_units_purchased,
+
+    TO_CHAR(
+        total_spending,
+        'FM999,999,990.00'
+    ) AS total_spending,
+
+    TO_CHAR(
+        average_line_spending,
+        'FM999,999,990.00'
+    ) AS average_line_spending,
+
+    CASE
+        WHEN total_spending >= 5000 THEN
+            'VIP CUSTOMER'
+
+        WHEN total_spending >= 2000 THEN
+            'HIGH VALUE'
+
+        WHEN total_spending >= 500 THEN
+            'REGULAR'
+
+        ELSE
+            'LOW ACTIVITY'
+    END AS customer_segment
+
+FROM vw_member_purchase_behavior
+
+WHERE total_orders > 0
+
+ORDER BY
+    total_spending DESC;

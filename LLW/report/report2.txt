@@ -1,0 +1,121 @@
+CREATE OR REPLACE PROCEDURE rpt_top_members_summary (
+    p_top_members IN NUMBER,
+    p_top_items   IN NUMBER
+) AS
+
+    CURSOR memberCursor IS
+        SELECT *
+        FROM (
+            SELECT m.member_id,
+                   m.name,
+                   m.points_balance,
+                   SUM(oi.quantity * oi.unit_price) AS spent
+            FROM member m
+            JOIN orders o
+                ON m.member_id = o.member_id
+            JOIN order_item oi
+                ON o.order_id = oi.order_id
+            GROUP BY m.member_id,
+                     m.name,
+                     m.points_balance
+            ORDER BY spent DESC
+        )
+        WHERE ROWNUM <= p_top_members;
+
+    CURSOR itemCursor (
+        p_mid member.member_id%TYPE
+    ) IS
+        SELECT *
+        FROM (
+            SELECT i.item_name,
+                   SUM(oi.quantity) AS units
+            FROM order_item oi
+            JOIN item i
+                ON oi.item_id = i.item_id
+            JOIN orders o
+                ON o.order_id = oi.order_id
+            WHERE o.member_id = p_mid
+            GROUP BY i.item_name
+            ORDER BY units DESC
+        )
+        WHERE ROWNUM <= p_top_items;
+
+    v_rank NUMBER := 0;
+
+BEGIN
+
+    DBMS_OUTPUT.PUT_LINE(
+        '================================================================================'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'TOP ' || p_top_members || ' MEMBERS SUMMARY REPORT'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '================================================================================'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'Top Members: ' || p_top_members ||
+        ' | Favourite Items per Member: ' || p_top_items
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '================================================================================'
+    );
+
+    FOR r_m IN memberCursor LOOP
+
+        v_rank := v_rank + 1;
+
+        DBMS_OUTPUT.PUT_LINE(
+            '#' || v_rank || '  ' ||
+            r_m.name ||
+            ' | Points: ' || r_m.points_balance ||
+            ' | Lifetime Spending: RM ' ||
+            TO_CHAR(r_m.spent, '999,999,990.00')
+        );
+
+        DBMS_OUTPUT.PUT_LINE(
+            '--------------------------------------------------------------------------------'
+        );
+
+        DBMS_OUTPUT.PUT_LINE(
+            RPAD('Favourite Items', 34) ||
+            LPAD('Units Bought', 14)
+        );
+
+        DBMS_OUTPUT.PUT_LINE(
+            '--------------------------------------------------------------------------------'
+        );
+
+        FOR r_i IN itemCursor(r_m.member_id) LOOP
+
+            DBMS_OUTPUT.PUT_LINE(
+                RPAD(r_i.item_name, 34) ||
+                LPAD(TO_CHAR(r_i.units, '999,999'), 14)
+            );
+
+        END LOOP;
+
+        DBMS_OUTPUT.PUT_LINE(
+            CHR(10)
+        );
+
+    END LOOP;
+
+    DBMS_OUTPUT.PUT_LINE(
+        '================================================================================'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'End Of Report'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '================================================================================'
+    );
+
+END rpt_top_members_summary;
+/

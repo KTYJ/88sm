@@ -1,0 +1,173 @@
+CREATE OR REPLACE PROCEDURE sp_register_member (
+    p_name          IN member.name%TYPE,
+    p_ic            IN member.ic%TYPE,
+    p_email         IN member.email%TYPE,
+    p_address       IN member.address%TYPE,
+    p_date_of_birth IN member.date_of_birth%TYPE
+)
+IS
+    v_member_id NUMBER;
+    v_count NUMBER;
+
+    e_invalid_dob EXCEPTION;
+
+BEGIN
+
+    /* ==========================================
+       1. Validate Date of Birth
+       ========================================== */
+
+    IF p_date_of_birth > SYSDATE THEN
+
+        RAISE e_invalid_dob;
+
+    END IF;
+
+
+    /* ==========================================
+       2. Check Duplicate IC
+       ========================================== */
+
+    SELECT COUNT(*)
+    INTO v_count
+    FROM member
+    WHERE ic = p_ic;
+
+    IF v_count > 0 THEN
+
+        RAISE_APPLICATION_ERROR(
+            -20001,
+            'A member with this IC already exists.'
+        );
+
+    END IF;
+
+
+    /* ==========================================
+       3. Check Duplicate Email
+       ========================================== */
+
+    IF p_email IS NOT NULL THEN
+
+        SELECT COUNT(*)
+        INTO v_count
+        FROM member
+        WHERE email = p_email;
+
+        IF v_count > 0 THEN
+
+            RAISE_APPLICATION_ERROR(
+                -20002,
+                'A member with this email already exists.'
+            );
+
+        END IF;
+
+    END IF;
+
+
+    /* ==========================================
+       4. Generate Member ID
+       ========================================== */
+
+    v_member_id := seq_member_id.NEXTVAL;
+
+
+    /* ==========================================
+       5. Insert New Member
+       ========================================== */
+
+    INSERT INTO member (
+        member_id,
+        name,
+        ic,
+        email,
+        address,
+        date_of_birth,
+        expiry_date,
+        points_balance
+    )
+    VALUES (
+        v_member_id,
+        p_name,
+        p_ic,
+        p_email,
+        p_address,
+        p_date_of_birth,
+        ADD_MONTHS(SYSDATE, 12),
+        0
+    );
+
+
+    /* ==========================================
+       6. Display Result
+       ========================================== */
+
+    DBMS_OUTPUT.PUT_LINE(
+        '=========================================='
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'MEMBER REGISTRATION SUCCESSFUL'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '=========================================='
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'Member ID : ' || v_member_id
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'Name      : ' || p_name
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'Email     : ' || p_email
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'Expiry    : ' ||
+        TO_CHAR(
+            ADD_MONTHS(SYSDATE, 12),
+            'DD-MON-YYYY'
+        )
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'Points    : 0'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '=========================================='
+    );
+
+
+EXCEPTION
+
+    WHEN e_invalid_dob THEN
+
+        RAISE_APPLICATION_ERROR(
+            -20003,
+            'Date of birth cannot be in the future.'
+        );
+
+
+    WHEN OTHERS THEN
+
+        IF SQLCODE BETWEEN -20099 AND -20000 THEN
+
+            RAISE;
+
+        ELSE
+
+            RAISE_APPLICATION_ERROR(
+                -20004,
+                'Unexpected error: ' || SQLERRM
+            );
+
+        END IF;
+
+END;
+/

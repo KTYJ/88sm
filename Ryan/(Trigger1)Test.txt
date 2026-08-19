@@ -1,0 +1,27 @@
+SET SERVEROUTPUT ON;
+
+-- Test 1: First redemption should be accepted
+INSERT INTO redemption (
+    redemption_id,
+    order_id,
+    voucher_id
+)
+VALUES (
+    999901,
+    100001,
+    'V002'
+);
+
+-- Test 2: Same voucher + same order should be rejected
+INSERT INTO redemption (
+    redemption_id,
+    order_id,
+    voucher_id
+)
+VALUES (
+    999902,
+    100001,
+    'V002'
+);
+
+ROLLBACK;

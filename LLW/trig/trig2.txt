@@ -1,0 +1,12 @@
+CREATE OR REPLACE TRIGGER trg_stock_low_alert
+AFTER UPDATE OF stock_quantity ON branch_stock
+FOR EACH ROW
+WHEN (NEW.stock_quantity < 20)
+BEGIN
+    DBMS_OUTPUT.PUT_LINE(
+        '*** LOW STOCK ALERT *** Branch ' || :NEW.branch_id ||
+        ' item ' || :NEW.item_id ||
+        ' remaining stock: ' || :NEW.stock_quantity ||
+        '. Please reorder immediately.');
+END;
+/

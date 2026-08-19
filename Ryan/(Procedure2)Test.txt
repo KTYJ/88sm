@@ -1,0 +1,13 @@
+CLEAR COLUMNS;
+SET LINESIZE 120;
+SET PAGESIZE 30;
+
+COLUMN branch_id FORMAT 999999 HEADING 'Branch ID';
+COLUMN branch_name FORMAT A30 HEADING 'Branch Name';
+
+SELECT branch_id, branch_name
+FROM branch;
+
+SET SERVEROUTPUT ON;
+
+EXEC proc_branch_stock_report(1001);

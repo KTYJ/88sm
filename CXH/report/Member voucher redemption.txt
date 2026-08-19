@@ -1,0 +1,245 @@
+CREATE OR REPLACE PROCEDURE rpt_member_voucher_redemption (
+    p_member_id IN member.member_id%TYPE
+)
+IS
+
+    v_member_name member.name%TYPE;
+
+
+    /* ==========================================
+       OUTER CURSOR
+       ========================================== */
+
+    CURSOR c_orders IS
+
+        SELECT
+            o.order_id,
+            o.order_date,
+            o.order_type
+
+        FROM orders o
+
+        WHERE o.member_id = p_member_id
+
+        ORDER BY
+            o.order_date DESC;
+
+
+    /* ==========================================
+       INNER CURSOR
+       ========================================== */
+
+    CURSOR c_vouchers (
+        p_order_id orders.order_id%TYPE
+    ) IS
+
+        SELECT
+            r.redemption_id,
+            r.voucher_id,
+            v.voucher_type,
+            v.voucher_value,
+            r.redeemed_date
+
+        FROM redemption r
+
+        JOIN voucher v
+            ON r.voucher_id = v.voucher_id
+
+        WHERE r.order_id = p_order_id
+
+        ORDER BY
+            r.redeemed_date;
+
+
+    v_found BOOLEAN := FALSE;
+
+
+BEGIN
+
+    /* ==========================================
+       GET MEMBER
+       ========================================== */
+
+    SELECT name
+
+    INTO v_member_name
+
+    FROM member
+
+    WHERE member_id = p_member_id;
+
+
+    /* ==========================================
+       REPORT HEADER
+       ========================================== */
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('=', 110, '=')
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '88 SPEEDMART - MEMBER VOUCHER REDEMPTION REPORT'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'Member ID   : ' || p_member_id
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'Member Name : ' || v_member_name
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('=', 110, '=')
+    );
+
+
+    /* ==========================================
+       COLUMN HEADER
+       ========================================== */
+
+    DBMS_OUTPUT.PUT_LINE(
+
+        RPAD('Order ID', 12) ||
+
+        RPAD('Order Date', 22) ||
+
+        RPAD('Order Type', 18) ||
+
+        RPAD('Voucher', 14) ||
+
+        RPAD('Voucher Type', 18) ||
+
+        LPAD('Value', 12)
+
+    );
+
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('-', 110, '-')
+    );
+
+
+    /* ==========================================
+       OUTER CURSOR
+       ========================================== */
+
+    FOR r_order IN c_orders LOOP
+
+
+        /* ======================================
+           INNER CURSOR
+           ====================================== */
+
+        FOR r_voucher IN c_vouchers(
+            r_order.order_id
+        ) LOOP
+
+            v_found := TRUE;
+
+
+            DBMS_OUTPUT.PUT_LINE(
+
+                RPAD(
+                    TO_CHAR(
+                        r_order.order_id
+                    ),
+                    12
+                ) ||
+
+                RPAD(
+                    TO_CHAR(
+                        r_order.order_date,
+                        'DD-MON-YYYY HH24:MI'
+                    ),
+                    22
+                ) ||
+
+                RPAD(
+                    r_order.order_type,
+                    18
+                ) ||
+
+                RPAD(
+                    TO_CHAR(
+                        r_voucher.voucher_id
+                    ),
+                    14
+                ) ||
+
+                RPAD(
+                    r_voucher.voucher_type,
+                    18
+                ) ||
+
+                LPAD(
+
+                    CASE
+
+                        WHEN r_voucher.voucher_type = 'Amount'
+
+                        THEN
+                            'RM' ||
+                            TO_CHAR(
+                                r_voucher.voucher_value,
+                                'FM999,990.00'
+                            )
+
+                        ELSE
+
+                            TO_CHAR(
+                                r_voucher.voucher_value,
+                                'FM990.00'
+                            ) || '%'
+
+                    END,
+
+                    12
+                )
+
+            );
+
+        END LOOP;
+
+    END LOOP;
+
+
+    /* ==========================================
+       NO RECORD MESSAGE
+       ========================================== */
+
+    IF NOT v_found THEN
+
+        DBMS_OUTPUT.PUT_LINE(
+            'No voucher redemption records found.'
+        );
+
+    END IF;
+
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('=', 110, '=')
+    );
+
+
+EXCEPTION
+
+    WHEN NO_DATA_FOUND THEN
+
+        RAISE_APPLICATION_ERROR(
+            -20030,
+            'Member ID ' ||
+            p_member_id ||
+            ' does not exist.'
+        );
+
+
+    WHEN OTHERS THEN
+
+        DBMS_OUTPUT.PUT_LINE(
+            'Error generating report: ' ||
+            SQLERRM
+        );
+
+END;
+/

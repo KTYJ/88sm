@@ -1,0 +1,1 @@
+EXEC sp_update_item_price(1, 15.50);

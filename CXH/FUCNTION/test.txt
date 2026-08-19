@@ -1,0 +1,13 @@
+SELECT
+    m.member_id,
+    m.name,
+
+    TO_CHAR(
+        fn_member_total_spending(m.member_id),
+        'FM999,999,990.00'
+    ) AS total_spending
+
+FROM member m
+
+ORDER BY
+    fn_member_total_spending(m.member_id) DESC;

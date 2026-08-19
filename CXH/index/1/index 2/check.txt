@@ -1,0 +1,6 @@
+SELECT
+    index_name,
+    table_name,
+    status
+FROM user_indexes
+WHERE index_name = 'IDX_ORDERS_MEMBER_DATE';

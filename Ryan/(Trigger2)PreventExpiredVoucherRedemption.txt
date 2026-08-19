@@ -1,0 +1,49 @@
+SET DEFINE OFF;
+
+-- =============================================================================
+-- TRIGGER 1: trg_prevent_expired_voucher
+-- by RYAN
+-- Description: Automatically checks voucher expiration date before allowing 
+--              a redemption record to be inserted into the database. 
+--              Includes checks for order existence, voucher validity, and 
+--              expiration date limits.
+-- =============================================================================
+DROP TRIGGER trg_prevent_expired_voucher;
+CREATE OR REPLACE TRIGGER trg_prevent_expired_voucher
+BEFORE INSERT ON redemption
+FOR EACH ROW
+DECLARE
+    v_order_date  orders.order_date%TYPE;
+    v_expiry_date voucher.exp_date%TYPE;
+BEGIN
+    -- 1. Verify that the order exists and retrieve order_date
+    BEGIN
+        SELECT order_date INTO v_order_date
+        FROM   orders
+        WHERE  order_id = :NEW.order_id;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE_APPLICATION_ERROR(-20030, 'Invalid order_id (' || :NEW.order_id || ') — record does not exist in orders table.');
+    END;
+
+    -- 2. Verify that the voucher exists and retrieve exp_date
+    BEGIN
+        SELECT exp_date INTO v_expiry_date
+        FROM   voucher
+        WHERE  voucher_id = :NEW.voucher_id;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE_APPLICATION_ERROR(-20031, 'Invalid voucher_id (' || :NEW.voucher_id || ') — record does not exist in voucher table.');
+    END;
+
+    -- 3. Verify that the voucher has not expired
+    IF v_order_date > v_expiry_date THEN
+        RAISE_APPLICATION_ERROR(-20032, 'Redemption Failed: Voucher ' || :NEW.voucher_id || 
+            ' expired on ' || TO_CHAR(v_expiry_date, 'DD-MON-YYYY') || 
+            ' (Order Date: ' || TO_CHAR(v_order_date, 'DD-MON-YYYY') || ').');
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('trg_prevent_expired_voucher: Voucher ' || :NEW.voucher_id || ' validated and applied successfully to Order ' || :NEW.order_id || '.');
+
+END trg_prevent_expired_voucher;
+/

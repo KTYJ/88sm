@@ -1,0 +1,59 @@
+CREATE OR REPLACE TRIGGER trg_validate_item_price
+
+BEFORE UPDATE OF unit_price
+ON item
+
+FOR EACH ROW
+
+DECLARE
+    v_latest_cost procurement.unit_cost%TYPE;
+
+BEGIN
+
+    /* ==========================================
+       Find Latest Procurement Cost
+       ========================================== */
+
+    SELECT unit_cost
+    INTO v_latest_cost
+
+    FROM (
+        SELECT
+            unit_cost
+
+        FROM procurement
+
+        WHERE item_id = :NEW.item_id
+
+        ORDER BY procurement_date DESC
+    )
+
+    WHERE ROWNUM = 1;
+
+
+    /* ==========================================
+       Validate Selling Price
+       ========================================== */
+
+    IF :NEW.unit_price < v_latest_cost THEN
+
+        RAISE_APPLICATION_ERROR(
+            -20020,
+            'Selling price cannot be lower than latest procurement cost of RM' ||
+            TO_CHAR(
+                v_latest_cost,
+                'FM999,999,990.00'
+            )
+        );
+
+    END IF;
+
+
+EXCEPTION
+
+    WHEN NO_DATA_FOUND THEN
+
+        NULL;
+
+END;
+/

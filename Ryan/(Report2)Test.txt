@@ -1,0 +1,15 @@
+BEGIN
+    rp_member_point_activity(
+        DATE '2026-01-01',
+        DATE '2026-08-16'
+    );
+END;
+/
+
+BEGIN
+    rp_member_point_activity(
+        DATE '2026-07-01',
+        DATE '2026-07-31'
+    );
+END;
+/

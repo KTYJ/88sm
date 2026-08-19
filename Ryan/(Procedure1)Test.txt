@@ -1,0 +1,7 @@
+SET SERVEROUTPUT ON;
+
+SELECT member_id, name
+FROM member
+WHERE ROWNUM <= 5;
+
+EXEC proc_member_order_history(6001);

@@ -1,0 +1,40 @@
+--first, find the expiry dates:
+
+SELECT voucher_id, exp_date
+FROM voucher
+ORDER BY voucher_id;
+
+-- find some orders:
+
+SELECT order_id, order_date
+FROM orders
+WHERE ROWNUM <= 10;
+
+SET SERVEROUTPUT ON;
+
+-- Test 1: Valid voucher
+INSERT INTO redemption (
+    redemption_id,
+    order_id,
+    voucher_id
+)
+VALUES (
+    999903,
+    100001,
+    'V002'
+);
+
+ROLLBACK;
+
+
+-- Test 2: Expired voucher
+INSERT INTO redemption (
+    redemption_id,
+    order_id,
+    voucher_id
+)
+VALUES (
+    999904,
+    100005,
+    'V001'
+);

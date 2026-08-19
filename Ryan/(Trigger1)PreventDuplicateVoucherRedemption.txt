@@ -1,0 +1,48 @@
+SET DEFINE OFF;
+
+-- =============================================================================
+-- TRIGGER 2: trg_duplicate_voucher
+-- by RYAN
+-- Description: Ensures business rules compliance by preventing the same 
+--              voucher ID from being redeemed multiple times under the same 
+--              order ID. Includes order verification and duplicate checks.
+-- =============================================================================
+DROP TRIGGER trg_duplicate_voucher;
+CREATE OR REPLACE TRIGGER trg_duplicate_voucher
+BEFORE INSERT ON redemption
+FOR EACH ROW
+DECLARE
+    v_order_count NUMBER;
+    v_count       NUMBER;
+BEGIN
+    -- 1. Verify that the order exists in orders table
+    SELECT COUNT(*) INTO v_order_count
+    FROM   orders
+    WHERE  order_id = :NEW.order_id;
+
+    IF v_order_count = 0 THEN
+        RAISE_APPLICATION_ERROR(
+            -20030, 
+            'Invalid order_id (' || :NEW.order_id || ') — record does not exist in orders table.'
+        );
+    END IF;
+
+    -- 2. Check for duplicate voucher redemption on the same order
+    SELECT COUNT(*)
+    INTO   v_count
+    FROM   redemption
+    WHERE  voucher_id = :NEW.voucher_id
+      AND  order_id   = :NEW.order_id;
+
+    IF v_count > 0 THEN
+        RAISE_APPLICATION_ERROR(
+            -20031,
+            'Voucher ' || :NEW.voucher_id || 
+            ' has already been redeemed for order ' || :NEW.order_id || '.'
+        );
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('trg_duplicate_voucher: Voucher ' || :NEW.voucher_id || ' validated for order ' || :NEW.order_id || '.');
+
+END trg_duplicate_voucher;
+/

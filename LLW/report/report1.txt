@@ -1,0 +1,84 @@
+CREATE OR REPLACE PROCEDURE rpt_category_sales_summary (
+    p_category IN item.category%TYPE
+) AS
+
+    CURSOR itemCursor IS
+        SELECT i.item_id,
+               i.item_name,
+               NVL(SUM(oi.quantity), 0) AS units,
+               NVL(SUM(oi.quantity * oi.unit_price), 0) AS rev
+        FROM item i
+        LEFT JOIN order_item oi
+            ON i.item_id = oi.item_id
+        WHERE i.category = p_category
+        GROUP BY i.item_id, i.item_name
+        ORDER BY rev DESC;
+
+    v_cat_total   NUMBER(14,2);
+    v_item_count  NUMBER;
+
+BEGIN
+
+    DBMS_OUTPUT.PUT_LINE(
+        '================================================================================'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'CATEGORY SALES SUMMARY REPORT'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '================================================================================'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'CATEGORY: ' || p_category
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '================================================================================'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('Item', 34) ||
+        LPAD('Units Sold', 12) ||
+        LPAD('Revenue (RM)', 18)
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '--------------------------------------------------------------------------------'
+    );
+
+    v_cat_total := 0;
+    v_item_count := 0;
+
+    FOR r_i IN itemCursor LOOP
+
+        DBMS_OUTPUT.PUT_LINE(
+            RPAD(r_i.item_name, 34) ||
+            LPAD(TO_CHAR(r_i.units, '999,999'), 12) ||
+            LPAD(TO_CHAR(r_i.rev, '999,999,990.00'), 18)
+        );
+
+        v_cat_total := v_cat_total + r_i.rev;
+        v_item_count := v_item_count + 1;
+
+    END LOOP;
+
+    DBMS_OUTPUT.PUT_LINE(
+        '--------------------------------------------------------------------------------'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'Category Total: RM ' ||
+        TO_CHAR(v_cat_total, '999,999,990.00') ||
+        '   |   Items: ' ||
+        v_item_count
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '================================================================================'
+    );
+
+END rpt_category_sales_summary;
+/

@@ -1,0 +1,32 @@
+CREATE OR REPLACE FUNCTION fn_member_total_spending (
+    p_member_id IN member.member_id%TYPE
+)
+RETURN NUMBER
+IS
+
+    v_total NUMBER;
+
+BEGIN
+
+    SELECT
+        NVL(
+            SUM(
+                oi.quantity * oi.unit_price
+            ),
+            0
+        )
+
+    INTO v_total
+
+    FROM orders o
+
+    JOIN order_item oi
+        ON o.order_id = oi.order_id
+
+    WHERE o.member_id = p_member_id;
+
+
+    RETURN v_total;
+
+END;
+/
