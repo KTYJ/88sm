@@ -1,0 +1,190 @@
+CREATE OR REPLACE PROCEDURE rpt_supplier_procurement
+IS
+
+    CURSOR c_supplier IS
+
+        SELECT
+            supplier_id,
+            supplier_name,
+            total_items_supplied,
+            branches_supplied,
+            total_quantity_supplied,
+            total_procurement_cost
+
+        FROM vw_supplier_performance
+
+        ORDER BY
+            total_procurement_cost DESC;
+
+
+    v_rank NUMBER := 0;
+
+    v_grand_total NUMBER := 0;
+
+BEGIN
+
+    /* ==========================================
+       REPORT HEADER
+       ========================================== */
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('=', 105, '=')
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '88 SPEEDMART - SUPPLIER PROCUREMENT SUMMARY'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'Generated: ' ||
+        TO_CHAR(
+            SYSDATE,
+            'DD-MON-YYYY HH24:MI'
+        )
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('=', 105, '=')
+    );
+
+
+    /* ==========================================
+       COLUMN HEADER
+       ========================================== */
+
+    DBMS_OUTPUT.PUT_LINE(
+
+        RPAD('Rank', 8) ||
+
+        RPAD('Supplier', 28) ||
+
+        LPAD('Items', 10) ||
+
+        LPAD('Branches', 12) ||
+
+        LPAD('Quantity', 14) ||
+
+        LPAD('Cost (RM)', 20)
+
+    );
+
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('-', 105, '-')
+    );
+
+
+    /* ==========================================
+       REPORT BODY
+       ========================================== */
+
+    FOR r IN c_supplier LOOP
+
+        v_rank := v_rank + 1;
+
+        v_grand_total :=
+            v_grand_total +
+            r.total_procurement_cost;
+
+
+        DBMS_OUTPUT.PUT_LINE(
+
+            RPAD(
+                TO_CHAR(v_rank),
+                8
+            ) ||
+
+            RPAD(
+                SUBSTR(
+                    r.supplier_name,
+                    1,
+                    26
+                ),
+                28
+            ) ||
+
+            LPAD(
+                TO_CHAR(
+                    r.total_items_supplied
+                ),
+                10
+            ) ||
+
+            LPAD(
+                TO_CHAR(
+                    r.branches_supplied
+                ),
+                12
+            ) ||
+
+            LPAD(
+                TO_CHAR(
+                    r.total_quantity_supplied
+                ),
+                14
+            ) ||
+
+            LPAD(
+                TO_CHAR(
+                    r.total_procurement_cost,
+                    'FM999,999,990.00'
+                ),
+                20
+            )
+
+        );
+
+    END LOOP;
+
+
+    /* ==========================================
+       TOTAL
+       ========================================== */
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('-', 105, '-')
+    );
+
+
+    DBMS_OUTPUT.PUT_LINE(
+
+        RPAD(
+            'TOTAL PROCUREMENT COST',
+            73
+        ) ||
+
+        LPAD(
+            'RM' ||
+            TO_CHAR(
+                v_grand_total,
+                'FM999,999,990.00'
+            ),
+            20
+        )
+
+    );
+
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('=', 105, '=')
+    );
+
+
+EXCEPTION
+
+    WHEN OTHERS THEN
+
+        DBMS_OUTPUT.PUT_LINE(
+            'Error generating report: ' ||
+            SQLERRM
+        );
+
+END;
+/
+
+
+
+
+SET SERVEROUTPUT ON;
+
+EXEC rpt_supplier_procurement;

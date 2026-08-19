@@ -1,0 +1,43 @@
+CREATE OR REPLACE VIEW vw_member_purchase_behavior AS
+SELECT
+    m.member_id,
+    m.name,
+    m.email,
+    m.points_balance,
+
+    COUNT(DISTINCT o.order_id) AS total_orders,
+
+    COUNT(DISTINCT oi.item_id) AS different_items_purchased,
+
+    NVL(
+        SUM(oi.quantity),
+        0
+    ) AS total_units_purchased,
+
+    NVL(
+        SUM(oi.quantity * oi.unit_price),
+        0
+    ) AS total_spending,
+
+    NVL(
+        AVG(oi.quantity * oi.unit_price),
+        0
+    ) AS average_line_spending
+
+FROM member m
+
+LEFT JOIN orders o
+    ON m.member_id = o.member_id
+
+LEFT JOIN order_item oi
+    ON o.order_id = oi.order_id
+
+LEFT JOIN item i
+    ON oi.item_id = i.item_id
+
+GROUP BY
+    m.member_id,
+    m.name,
+    m.email,
+    m.points_balance;
+/

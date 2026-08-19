@@ -1,0 +1,142 @@
+-- ====================================================================
+-- PROCEDURE 1: Member Order History
+-- Purpose: To retrieve a member's order history and display the
+--          order details, items purchased, quantity, unit price
+--          and subtotal.
+-- ====================================================================
+
+CREATE OR REPLACE PROCEDURE proc_member_order_history (
+    p_member_id IN member.member_id%TYPE
+) AS
+
+    v_member_name member.name%TYPE;
+    v_found       BOOLEAN := FALSE;
+
+    CURSOR c_order_history IS
+        SELECT
+            o.order_id,
+            o.order_date,
+            o.order_type,
+            i.item_name,
+            oi.quantity,
+            oi.unit_price,
+            (oi.quantity * oi.unit_price) AS subtotal
+        FROM orders o
+        JOIN order_item oi
+            ON o.order_id = oi.order_id
+        JOIN item i
+            ON oi.item_id = i.item_id
+        WHERE o.member_id = p_member_id
+        ORDER BY o.order_date DESC, o.order_id;
+
+    v_order_id      orders.order_id%TYPE;
+    v_order_date    orders.order_date%TYPE;
+    v_order_type    orders.order_type%TYPE;
+    v_item_name     item.item_name%TYPE;
+    v_quantity      order_item.quantity%TYPE;
+    v_unit_price    order_item.unit_price%TYPE;
+    v_subtotal      NUMBER(10,2);
+
+BEGIN
+
+    -- Check whether the member exists
+    SELECT name
+    INTO v_member_name
+    FROM member
+    WHERE member_id = p_member_id;
+
+    DBMS_OUTPUT.PUT_LINE(
+        '======================================================================'
+    );
+    DBMS_OUTPUT.PUT_LINE('MEMBER ORDER HISTORY');
+    DBMS_OUTPUT.PUT_LINE(
+        '======================================================================'
+    );
+    DBMS_OUTPUT.PUT_LINE(
+        'Member ID   : ' || p_member_id
+    );
+    DBMS_OUTPUT.PUT_LINE(
+        'Member Name : ' || v_member_name
+    );
+    DBMS_OUTPUT.PUT_LINE(
+        '======================================================================'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('Order ID', 12) ||
+        RPAD('Date', 14) ||
+        RPAD('Type', 16) ||
+        RPAD('Item', 30) ||
+        LPAD('Qty', 5) ||
+        LPAD('Unit Price', 14) ||
+        LPAD('Subtotal', 14)
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '------------  ------------  --------------  ------------------------------  -----  ------------  ------------'
+    );
+
+    -- Open cursor
+    OPEN c_order_history;
+
+    LOOP
+
+        FETCH c_order_history
+        INTO v_order_id,
+             v_order_date,
+             v_order_type,
+             v_item_name,
+             v_quantity,
+             v_unit_price,
+             v_subtotal;
+
+        EXIT WHEN c_order_history%NOTFOUND;
+
+        v_found := TRUE;
+
+        -- Display every item as one complete row
+        DBMS_OUTPUT.PUT_LINE(
+            RPAD(v_order_id, 12) ||
+            RPAD(TO_CHAR(v_order_date, 'DD-MON-YYYY'), 14) ||
+            RPAD(v_order_type, 16) ||
+            RPAD(SUBSTR(v_item_name, 1, 30), 30) ||
+            LPAD(TO_CHAR(v_quantity), 5) ||
+            LPAD('RM ' || TO_CHAR(v_unit_price, '990.00'), 14) ||
+            LPAD('RM ' || TO_CHAR(v_subtotal, '990.00'), 14)
+        );
+
+    END LOOP;
+
+    CLOSE c_order_history;
+
+    -- Check whether the member has any orders
+    IF NOT v_found THEN
+        DBMS_OUTPUT.PUT_LINE(
+            'No order history found for this member.'
+        );
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE(
+        '======================================================================'
+    );
+
+EXCEPTION
+
+    -- Member does not exist
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE(
+            'Error: Member ' || p_member_id || ' does not exist.'
+        );
+
+    -- Default exception
+    WHEN OTHERS THEN
+        IF c_order_history%ISOPEN THEN
+            CLOSE c_order_history;
+        END IF;
+
+        DBMS_OUTPUT.PUT_LINE(
+            'Error: ' || SQLERRM
+        );
+
+END;
+/

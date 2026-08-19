@@ -1,0 +1,20 @@
+COLUMN item_id          FORMAT A10         HEADING 'ITEM ID';
+COLUMN item_name        FORMAT A30 TRUNCATED HEADING 'ITEM NAME';
+COLUMN category         FORMAT A14 TRUNCATED HEADING 'CATEGORY';
+COLUMN total_units_sold FORMAT 999,990     HEADING 'UNITS SOLD';
+COLUMN total_revenue    FORMAT 999,999,990.99 HEADING 'REVENUE (RM)';
+COLUMN times_ordered    FORMAT 999,990     HEADING 'TIMES ORDERED';
+COLUMN current_price    FORMAT 990.99      HEADING 'PRICE NOW';
+
+SELECT v.item_id,
+       v.item_name,
+       v.category,
+       v.total_units_sold,
+       v.total_revenue,
+       v.times_ordered,
+       i.unit_price AS current_price
+FROM   (SELECT *
+        FROM   v_top_selling_items
+        ORDER  BY total_units_sold DESC) v
+JOIN   item i ON v.item_id = i.item_id
+WHERE  ROWNUM <= 10;

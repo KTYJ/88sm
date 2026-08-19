@@ -1,0 +1,123 @@
+cl scr
+
+-- ============================================================
+-- QUERY 2: Item Price & Sales Performance
+-- Period: Last 2 Years
+-- ============================================================
+
+
+-- ============================================================
+-- VIEW 2: ITEM PRICE & SALES PERFORMANCE
+-- ============================================================
+
+CREATE OR REPLACE VIEW item_sales_view AS
+SELECT
+    oi.item_id,
+    SUM(oi.quantity) AS total_quantity,
+    SUM(oi.quantity * oi.unit_price) AS total_sales,
+    ROUND(AVG(oi.unit_price), 2) AS avg_unit_price
+FROM order_item oi
+JOIN orders o
+    ON oi.order_id = o.order_id
+WHERE o.order_date >= ADD_MONTHS(SYSDATE, -24)
+GROUP BY
+    oi.item_id
+HAVING SUM(oi.quantity) > 0;
+
+
+-- ============================================================
+-- SQL*PLUS OUTPUT FORMATTING
+-- ============================================================
+
+SET LINESIZE 130
+SET PAGESIZE 30
+SET VERIFY OFF
+SET UNDERLINE '='
+SET DEFINE ON
+
+COLUMN rank FORMAT 99 HEADING 'Rank'
+COLUMN item_id FORMAT A10 HEADING 'Item ID'
+COLUMN item_name FORMAT A30 HEADING 'Item Name'
+COLUMN category FORMAT A20 HEADING 'Category'
+COLUMN total_quantity FORMAT 999,999 HEADING 'Units Sold'
+COLUMN total_sales FORMAT 999,999,999.99 HEADING 'Total Sales (RM)'
+COLUMN avg_unit_price FORMAT 999,999.99 HEADING 'Avg Selling Price (RM)'
+
+
+-- ============================================================
+-- GET REPORT DATE RANGE
+-- ============================================================
+
+COLUMN start_date NEW_VALUE v_start_date NOPRINT
+COLUMN end_date NEW_VALUE v_end_date NOPRINT
+
+SELECT
+    TO_CHAR(ADD_MONTHS(SYSDATE, -24), 'DD-MON-YYYY') AS start_date,
+    TO_CHAR(SYSDATE, 'DD-MON-YYYY') AS end_date
+FROM dual;
+
+
+-- ============================================================
+-- REPORT TITLE
+-- ============================================================
+
+TTITLE CENTER 'Item Price & Sales Performance Report' SKIP 1 -
+       CENTER '&v_start_date to &v_end_date' SKIP 1 -
+       CENTER 'Top 10 Items by Total Sales' SKIP 1 -
+       RIGHT 'Page: ' FORMAT 999 SQL.PNO SKIP 2
+
+BTITLE CENTER '----------------------------------------------' SKIP 1 -
+       CENTER '*** End of Report ***' SKIP 1
+
+
+-- ============================================================
+-- QUERY 2
+-- ============================================================
+
+SELECT
+    ROWNUM AS rank,
+    v.item_id,
+    v.item_name,
+    v.category,
+    v.total_quantity,
+    v.total_sales,
+    v.avg_unit_price
+FROM
+(
+    SELECT
+        i.item_id,
+        i.item_name,
+        i.category,
+        isv.total_quantity,
+        isv.total_sales,
+        isv.avg_unit_price
+    FROM item i
+    JOIN item_sales_view isv
+        ON i.item_id = isv.item_id
+    ORDER BY
+        isv.total_sales DESC,
+        isv.total_quantity DESC
+) v
+WHERE ROWNUM <= 10;
+
+
+-- ============================================================
+-- CLEAN UP SQL*PLUS SETTINGS
+-- ============================================================
+
+TTITLE OFF
+BTITLE OFF
+
+CLEAR COLUMNS
+CLEAR BREAKS
+CLEAR COMPUTES
+
+SET UNDERLINE '-'
+SET DEFINE OFF;
+
+
+-- ============================================================
+-- DROP VIEW AFTER EXECUTION
+-- ============================================================
+
+DROP VIEW item_sales_view;

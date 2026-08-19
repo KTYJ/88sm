@@ -1,0 +1,21 @@
+COLUMN sales_year       FORMAT 9999        HEADING 'YEAR';
+COLUMN order_type       FORMAT A12         HEADING 'TYPE';
+COLUMN total_orders     FORMAT 999,990     HEADING 'ORDERS';
+COLUMN revenue          FORMAT 999,999,990.99 HEADING 'REVENUE (RM)';
+COLUMN avg_order_value  FORMAT 99,990.99   HEADING 'AVG ORDER';
+COLUMN branches_served  FORMAT 999         HEADING 'BR#';
+COLUMN latest_order     FORMAT A12         HEADING 'LAST ORDER';
+
+SELECT v.sales_year,
+       v.order_type,
+       v.total_orders,
+       v.revenue,
+       v.avg_order_value,
+       v.branches_served,
+       TO_CHAR(MAX(o.order_date), 'DD-MM-YYYY') AS latest_order
+FROM   v_order_type_trend v
+JOIN   orders o ON EXTRACT(YEAR FROM o.order_date) = v.sales_year
+              AND o.order_type = v.order_type
+GROUP  BY v.sales_year, v.order_type, v.total_orders,
+          v.revenue, v.avg_order_value, v.branches_served
+ORDER  BY v.sales_year, v.order_type;

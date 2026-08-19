@@ -1,0 +1,10 @@
+SELECT
+    supplier_id,
+    supplier_name,
+    total_items_supplied,
+    branches_supplied,
+    total_quantity_supplied,
+    total_procurement_cost,
+    average_unit_cost
+FROM vw_supplier_performance
+ORDER BY total_procurement_cost DESC;

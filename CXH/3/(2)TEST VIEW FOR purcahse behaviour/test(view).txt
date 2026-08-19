@@ -1,0 +1,2 @@
+SELECT *
+FROM vw_member_purchase_behavior;

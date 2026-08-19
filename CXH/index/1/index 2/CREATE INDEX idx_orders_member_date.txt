@@ -1,0 +1,2 @@
+CREATE INDEX idx_orders_member_date
+ON orders(member_id, order_date);

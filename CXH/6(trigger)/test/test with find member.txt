@@ -1,0 +1,6 @@
+SELECT
+    member_id,
+    name,
+    points_balance
+FROM member
+WHERE ROWNUM <= 5;

@@ -1,0 +1,365 @@
+CL SCR
+SET SERVEROUTPUT ON
+SET DEFINE OFF
+SET LINESIZE 120;
+
+-- =============================================================================
+-- REPORT 1: DELIVERY COMPANY PERFORMANCE REPORT
+-- By: Ryan
+-- Cursor: Single cursor
+-- Parameter: Start Date and End Date
+-- =============================================================================
+
+CREATE OR REPLACE PROCEDURE proc_delivery_company_report (
+    p_start_date IN DATE,
+    p_end_date   IN DATE
+) AS
+
+    -- ============================================================
+    -- CURSOR
+    -- ============================================================
+
+    CURSOR c_delivery_company IS
+        SELECT
+            dc.company_id,
+            dc.company_name,
+
+            COUNT(d.delivery_id) AS total_deliveries,
+
+            SUM(
+                CASE
+                    WHEN d.delivery_status = 'Delivered'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS delivered,
+
+            SUM(
+                CASE
+                    WHEN d.delivery_status = 'Out for Delivery'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS out_for_delivery,
+
+            SUM(
+                CASE
+                    WHEN d.delivery_status = 'Pending'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS pending,
+
+            SUM(
+                CASE
+                    WHEN d.delivery_status = 'Preparing'
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS preparing,
+
+            ROUND(
+                SUM(
+                    CASE
+                        WHEN d.delivery_status = 'Delivered'
+                        THEN 1
+                        ELSE 0
+                    END
+                ) * 100 / COUNT(d.delivery_id),
+                2
+            ) AS completion_rate
+
+        FROM delivery_company dc
+        JOIN delivery d
+            ON dc.company_id = d.company_id
+        JOIN orders o
+            ON d.order_id = o.order_id
+
+        WHERE o.order_date >= p_start_date
+          AND o.order_date < p_end_date + 1
+
+        GROUP BY
+            dc.company_id,
+            dc.company_name
+
+        ORDER BY
+            completion_rate DESC,
+            total_deliveries DESC;
+
+
+    -- ============================================================
+    -- VARIABLES
+    -- ============================================================
+
+    v_company_id          delivery_company.company_id%TYPE;
+    v_company_name        delivery_company.company_name%TYPE;
+
+    v_total_deliveries    NUMBER;
+    v_delivered           NUMBER;
+    v_out_for_delivery    NUMBER;
+    v_pending             NUMBER;
+    v_preparing           NUMBER;
+    v_completion_rate     NUMBER;
+
+    -- Management summary variables
+    v_grand_total         NUMBER := 0;
+    v_grand_delivered     NUMBER := 0;
+    v_overall_rate        NUMBER := 0;
+
+    v_best_company        VARCHAR2(100);
+    v_best_rate           NUMBER := 0;
+
+    v_worst_company       VARCHAR2(100);
+    v_worst_rate          NUMBER := 101;
+
+    v_found BOOLEAN := FALSE;
+
+
+BEGIN
+
+    -- ============================================================
+    -- VALIDATE DATE RANGE
+    -- ============================================================
+
+    IF p_start_date > p_end_date THEN
+
+        RAISE_APPLICATION_ERROR(
+            -20040,
+            'Invalid date range: Start date cannot be later than end date.'
+        );
+
+    END IF;
+
+
+    -- ============================================================
+    -- REPORT TITLE
+    -- ============================================================
+
+    DBMS_OUTPUT.PUT_LINE(
+        '=========================================================================='
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '                    DELIVERY COMPANY PERFORMANCE REPORT'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '=========================================================================='
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'Period      : ' ||
+        TO_CHAR(p_start_date, 'DD-MON-YYYY') ||
+        ' to ' ||
+        TO_CHAR(p_end_date, 'DD-MON-YYYY')
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        'Generated On: ' ||
+        TO_CHAR(SYSDATE, 'DD-MON-YYYY HH24:MI')
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '=========================================================================='
+    );
+
+
+    -- ============================================================
+    -- COLUMN HEADINGS
+    -- ============================================================
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('Company ID', 12) ||
+        RPAD('Company Name', 25) ||
+        LPAD('Total', 8) ||
+        LPAD('Delivered', 12) ||
+        LPAD('Out', 8) ||
+        LPAD('Pending', 10) ||
+        LPAD('Preparing', 11) ||
+        LPAD('Rate', 10)
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '------------  ------------------------  -------  -----------  -------  ---------  ----------  ---------'
+    );
+
+
+    -- ============================================================
+    -- OPEN CURSOR
+    -- ============================================================
+
+    OPEN c_delivery_company;
+
+
+    LOOP
+
+        FETCH c_delivery_company
+        INTO
+            v_company_id,
+            v_company_name,
+            v_total_deliveries,
+            v_delivered,
+            v_out_for_delivery,
+            v_pending,
+            v_preparing,
+            v_completion_rate;
+
+        EXIT WHEN c_delivery_company%NOTFOUND;
+
+        v_found := TRUE;
+
+
+        -- ========================================================
+        -- DISPLAY COMPANY DATA
+        -- ========================================================
+
+        DBMS_OUTPUT.PUT_LINE(
+            RPAD(v_company_id, 12) ||
+            RPAD(SUBSTR(v_company_name, 1, 24), 25) ||
+            LPAD(TO_CHAR(v_total_deliveries), 8) ||
+            LPAD(TO_CHAR(v_delivered), 12) ||
+            LPAD(TO_CHAR(v_out_for_delivery), 8) ||
+            LPAD(TO_CHAR(v_pending), 10) ||
+            LPAD(TO_CHAR(v_preparing), 11) ||
+            LPAD(TO_CHAR(v_completion_rate, '990.00') || '%', 10)
+        );
+
+
+        -- ========================================================
+        -- CALCULATE MANAGEMENT SUMMARY
+        -- ========================================================
+
+        v_grand_total :=
+            v_grand_total + v_total_deliveries;
+
+        v_grand_delivered :=
+            v_grand_delivered + v_delivered;
+
+
+        -- First company has highest rate because cursor
+        -- is ordered by completion rate DESC
+
+        IF v_best_company IS NULL THEN
+
+            v_best_company := v_company_name;
+            v_best_rate := v_completion_rate;
+
+        END IF;
+
+
+        -- Lowest completion rate
+
+        IF v_completion_rate < v_worst_rate THEN
+
+            v_worst_company := v_company_name;
+            v_worst_rate := v_completion_rate;
+
+        END IF;
+
+
+    END LOOP;
+
+
+    -- ============================================================
+    -- CLOSE CURSOR
+    -- ============================================================
+
+    CLOSE c_delivery_company;
+
+
+    -- ============================================================
+    -- DISPLAY MANAGEMENT SUMMARY
+    -- ============================================================
+
+    IF v_found THEN
+
+        v_overall_rate :=
+            ROUND(
+                (v_grand_delivered * 100) / v_grand_total,
+                2
+            );
+
+
+        DBMS_OUTPUT.PUT_LINE(
+            '=========================================================================='
+        );
+
+        DBMS_OUTPUT.PUT_LINE(
+            '                         MANAGEMENT SUMMARY'
+        );
+
+        DBMS_OUTPUT.PUT_LINE(
+            '=========================================================================='
+        );
+
+        DBMS_OUTPUT.PUT_LINE(
+            'Total Deliveries          : ' ||
+            v_grand_total
+        );
+
+        DBMS_OUTPUT.PUT_LINE(
+            'Total Delivered           : ' ||
+            v_grand_delivered
+        );
+
+        DBMS_OUTPUT.PUT_LINE(
+            'Overall Completion Rate   : ' ||
+            TO_CHAR(v_overall_rate, '990.00') || '%'
+        );
+
+        DBMS_OUTPUT.PUT_LINE(
+            'Best Performing Company   : ' ||
+            v_best_company ||
+            ' (' ||
+            TO_CHAR(v_best_rate, '990.00') ||
+            '%)'
+        );
+
+        DBMS_OUTPUT.PUT_LINE(
+            'Lowest Performing Company : ' ||
+            v_worst_company ||
+            ' (' ||
+            TO_CHAR(v_worst_rate, '990.00') ||
+            '%)'
+        );
+
+        DBMS_OUTPUT.PUT_LINE(
+            '=========================================================================='
+        );
+
+    ELSE
+
+        DBMS_OUTPUT.PUT_LINE(
+            'No delivery records were found for the selected period.'
+        );
+
+    END IF;
+
+
+    -- ============================================================
+    -- END OF REPORT
+    -- ============================================================
+
+    DBMS_OUTPUT.PUT_LINE(
+        '*** End of Report ***'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '=========================================================================='
+    );
+
+
+EXCEPTION
+
+    WHEN OTHERS THEN
+
+        IF c_delivery_company%ISOPEN THEN
+            CLOSE c_delivery_company;
+        END IF;
+
+        DBMS_OUTPUT.PUT_LINE(
+            'Error: ' || SQLERRM
+        );
+
+END;
+/
