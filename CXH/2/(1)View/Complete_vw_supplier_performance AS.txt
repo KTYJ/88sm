@@ -1,0 +1,64 @@
+CREATE OR REPLACE VIEW vw_supplier_performance AS
+SELECT
+    s.supplier_id,
+    s.supplier_name,
+    COUNT(DISTINCT p.item_id) AS total_items_supplied,
+    COUNT(DISTINCT p.branch_id) AS branches_supplied,
+    SUM(p.quantity) AS total_quantity_supplied,
+    SUM(p.quantity * p.unit_cost) AS total_procurement_cost,
+    AVG(p.unit_cost) AS average_unit_cost
+FROM supplier s
+JOIN procurement p
+    ON s.supplier_id = p.supplier_id
+JOIN item i
+    ON p.item_id = i.item_id
+JOIN branch b
+    ON p.branch_id = b.branch_id
+WHERE p.quantity > 0
+GROUP BY
+    s.supplier_id,
+    s.supplier_name
+HAVING SUM(p.quantity * p.unit_cost) > 0;
+
+SET LINESIZE 180
+SET PAGESIZE 100
+
+COLUMN supplier_id              FORMAT 999        HEADING 'Supplier ID'
+COLUMN supplier_name            FORMAT A30       HEADING 'Supplier Name'
+COLUMN total_items_supplied     FORMAT 999       HEADING 'Items Supplied'
+COLUMN branches_supplied        FORMAT 999       HEADING 'Branches'
+COLUMN total_quantity_supplied  FORMAT 99,999    HEADING 'Total Quantity'
+COLUMN total_procurement_cost   FORMAT 999,999,990.00 HEADING 'Procurement Cost'
+COLUMN average_unit_cost        FORMAT 990.00    HEADING 'Avg Unit Cost'
+COLUMN procurement_rank         FORMAT 999       HEADING 'Rank'
+
+SELECT
+    supplier_id,
+    supplier_name,
+    total_items_supplied,
+    branches_supplied,
+    total_quantity_supplied,
+    TO_CHAR(
+        total_procurement_cost,
+        'FM999,999,990.00'
+    ) AS total_procurement_cost,
+    TO_CHAR(
+        average_unit_cost,
+        'FM999,999,990.00'
+    ) AS average_unit_cost,
+    procurement_rank
+FROM (
+    SELECT
+        supplier_id,
+        supplier_name,
+        total_items_supplied,
+        branches_supplied,
+        total_quantity_supplied,
+        total_procurement_cost,
+        average_unit_cost,
+        RANK() OVER (
+            ORDER BY total_procurement_cost DESC
+        ) AS procurement_rank
+    FROM vw_supplier_performance
+)
+ORDER BY procurement_rank;
