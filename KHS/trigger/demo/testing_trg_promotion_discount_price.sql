@@ -11,7 +11,7 @@ COLUMN promotion_id FORMAT 999999 HEADING 'Promotion ID'
 COLUMN discount_type FORMAT A20 HEADING 'Discount Type'
 COLUMN discount_value FORMAT 9990.00 HEADING 'Discount Value'
 
-DELETE FROM promotion_details WHERE promotion_id IN (5038, 5039, 5040);
+DELETE FROM promotion_details WHERE promotion_id IN (5028, 5029, 5030);
 
 PROMPT ============================================================
 PROMPT ITEM PRICE
@@ -36,7 +36,7 @@ INSERT INTO promotion_details (
     discount_value
 )
 VALUES (
-    5038,
+    5028,
     'BA001',
     'Amount',
     5
@@ -57,7 +57,7 @@ INSERT INTO promotion_details (
     discount_value
 )
 VALUES (
-    5039,
+    5029,
     'BA001',
     'Amount',
     10
@@ -78,7 +78,7 @@ INSERT INTO promotion_details (
     discount_value
 )
 VALUES (
-    5040,
+    5030,
     'BA001',
     'Percentage',
     50
@@ -98,7 +98,7 @@ SELECT
     discount_type,
     discount_value
 FROM promotion_details
-WHERE promotion_id IN (5038, 5039, 5040)
+WHERE promotion_id IN (5028, 5029, 5030)
 ORDER BY promotion_id;
 
 

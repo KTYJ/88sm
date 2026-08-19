@@ -25,8 +25,6 @@ SELECT
 FROM branch_stock
 GROUP BY item_id;
 
-
-
 CREATE OR REPLACE VIEW inventory_turnover_rate_view AS
 SELECT
     i.item_id,
@@ -81,6 +79,9 @@ SELECT
         ELSE SUM(total_cogs) / SUM(inventory_value)
     END AS turnover_ratio
 FROM inventory_turnover_rate_view
+WHERE category IN ('Frozen', 'Groceries', 'Dairy', 'Bakery', 'Canned Food', 'Snacks') 
 GROUP BY category
+HAVING SUM(quantity_sold) > 200
 ORDER BY turnover_ratio DESC;
+
 SET FEEDBACK ON

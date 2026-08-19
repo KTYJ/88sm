@@ -92,6 +92,36 @@ IS
     v_promotion_total  NUMBER(12,2) := 0;
     v_promotion_qty    NUMBER := 0;
 
+    FUNCTION fn_calculate_quantity_sold(
+        p_quantity_sold NUMBER,
+        p_quantity      NUMBER
+    ) RETURN NUMBER
+    IS
+    BEGIN
+        RETURN p_quantity_sold + p_quantity;
+    END fn_calculate_quantity_sold;
+
+
+    FUNCTION fn_calculate_sales_revenue(
+        p_current_revenue NUMBER,
+        p_quantity        NUMBER,
+        p_unit_price      NUMBER
+    ) RETURN NUMBER
+    IS
+    BEGIN
+        RETURN p_current_revenue +
+               (p_quantity * p_unit_price);
+    END fn_calculate_sales_revenue;
+
+
+    FUNCTION fn_calculate_order_count(
+        p_order_count NUMBER
+    ) RETURN NUMBER
+    IS
+    BEGIN
+        RETURN p_order_count + 1;
+    END fn_calculate_order_count;
+
 BEGIN
 
     /* ==========================================================
@@ -233,21 +263,31 @@ BEGIN
 
                 FETCH c_order_item
                 INTO v_order_id,
-                     v_quantity,
-                     v_unit_price;
+                    v_quantity,
+                    v_unit_price;
 
                 EXIT WHEN c_order_item%NOTFOUND;
 
 
                 v_quantity_sold :=
-                    v_quantity_sold + v_quantity;
+                    fn_calculate_quantity_sold(
+                        v_quantity_sold,
+                        v_quantity
+                    );
+
 
                 v_sales_revenue :=
-                    v_sales_revenue +
-                    (v_quantity * v_unit_price);
+                    fn_calculate_sales_revenue(
+                        v_sales_revenue,
+                        v_quantity,
+                        v_unit_price
+                    );
+
 
                 v_order_count :=
-                    v_order_count + 1;
+                    fn_calculate_order_count(
+                        v_order_count
+                    );
 
             END LOOP;
 
