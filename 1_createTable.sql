@@ -218,7 +218,7 @@ CREATE TABLE delivery (
     CONSTRAINT pk_delivery PRIMARY KEY (delivery_id),
     CONSTRAINT fk_delivery_order FOREIGN KEY (order_id) REFERENCES orders (order_id),
     CONSTRAINT fk_delivery_company FOREIGN KEY (company_id) REFERENCES delivery_company (company_id),
-    CONSTRAINT chk_delivery_status CHECK (delivery_status IN ('Delivered', 'Out for Delivery', 'Pending', 'Preparing'))
+    CONSTRAINT chk_delivery_status CHECK (delivery_status IN ('Delivered', 'Out for Delivery', 'Pending', 'Preparing', 'Cancelled'))
 );
 
 CREATE TABLE self_pickup (
@@ -229,7 +229,7 @@ CREATE TABLE self_pickup (
     pickup_exp_date TIMESTAMP,
     CONSTRAINT pk_self_pickup PRIMARY KEY (pickup_id),
     CONSTRAINT fk_pickup_order FOREIGN KEY (order_id) REFERENCES orders (order_id),
-    CONSTRAINT chk_pickup_status CHECK (pickup_status IN ('Completed', 'Ready', 'Preparing', 'Expired', 'Rescheduled'))
+    CONSTRAINT chk_pickup_status CHECK (pickup_status IN ('Completed', 'Ready', 'Preparing', 'Expired', 'Rescheduled', 'Cancelled'))
 );
 
 CREATE TABLE point_history (
@@ -243,3 +243,5 @@ CREATE TABLE point_history (
     CONSTRAINT chk_point_type CHECK (transaction_type IN ('Earned', 'Used')),
     CONSTRAINT chk_point_amount CHECK (amount > 0)
 );
+
+COMMIT;
