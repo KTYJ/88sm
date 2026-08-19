@@ -60,6 +60,63 @@ IS
     v_customer_count  NUMBER := 0;
     v_temp            rfm_record;
 
+    FUNCTION fn_calculate_recency(
+        p_last_order_date DATE
+    ) RETURN NUMBER
+    IS
+    BEGIN
+        RETURN TRUNC(SYSDATE) - TRUNC(p_last_order_date);
+    END fn_calculate_recency;
+
+    FUNCTION fn_calculate_order_amount(
+        p_quantity   NUMBER,
+        p_unit_price NUMBER
+    ) RETURN NUMBER
+    IS
+    BEGIN
+        RETURN p_quantity * p_unit_price;
+    END fn_calculate_order_amount;
+
+
+    FUNCTION fn_calculate_rfm_score(
+        p_recency   NUMBER,
+        p_frequency NUMBER,
+        p_monetary  NUMBER
+    ) RETURN NUMBER
+    IS
+        v_score NUMBER := 0;
+    BEGIN
+
+        IF p_recency <= 30 THEN
+            v_score := v_score + 3;
+        ELSIF p_recency <= 90 THEN
+            v_score := v_score + 2;
+        ELSE
+            v_score := v_score + 1;
+        END IF;
+
+
+        IF p_frequency >= 10 THEN
+            v_score := v_score + 3;
+        ELSIF p_frequency >= 5 THEN
+            v_score := v_score + 2;
+        ELSE
+            v_score := v_score + 1;
+        END IF;
+
+
+        IF p_monetary >= 500 THEN
+            v_score := v_score + 3;
+        ELSIF p_monetary >= 200 THEN
+            v_score := v_score + 2;
+        ELSE
+            v_score := v_score + 1;
+        END IF;
+
+        RETURN v_score;
+
+    END fn_calculate_rfm_score;
+
 BEGIN
     IF p_branch_id IS NULL THEN
         RAISE_APPLICATION_ERROR(-20010, 'Branch ID is required.');
@@ -98,39 +155,15 @@ BEGIN
             LOOP
                 FETCH c_order_item INTO v_quantity, v_unit_price;
                 EXIT WHEN c_order_item%NOTFOUND;
-                v_monetary := v_monetary + (v_quantity * v_unit_price);
+                v_monetary := v_monetary + fn_calculate_order_amount(v_quantity, v_unit_price);
             END LOOP;
             CLOSE c_order_item;
         END LOOP;
         CLOSE c_order;
 
-        v_recency := TRUNC(SYSDATE) - TRUNC(v_last_order_date);
+        v_recency := fn_calculate_recency(v_last_order_date);
 
-        v_rfm_score := 0;
-
-        IF v_recency <= 30 THEN
-            v_rfm_score := v_rfm_score + 3;
-        ELSIF v_recency <= 90 THEN
-            v_rfm_score := v_rfm_score + 2;
-        ELSE
-            v_rfm_score := v_rfm_score + 1;
-        END IF;
-
-        IF v_frequency >= 10 THEN
-            v_rfm_score := v_rfm_score + 3;
-        ELSIF v_frequency >= 5 THEN
-            v_rfm_score := v_rfm_score + 2;
-        ELSE
-            v_rfm_score := v_rfm_score + 1;
-        END IF;
-
-        IF v_monetary >= 500 THEN
-            v_rfm_score := v_rfm_score + 3;
-        ELSIF v_monetary >= 200 THEN
-            v_rfm_score := v_rfm_score + 2;
-        ELSE
-            v_rfm_score := v_rfm_score + 1;
-        END IF;
+        v_rfm_score := fn_calculate_rfm_score(v_recency, v_frequency, v_monetary);
 
         IF (p_recency IS NULL OR v_recency <= p_recency)
            AND (p_frequency IS NULL OR v_frequency >= p_frequency)

@@ -21,7 +21,7 @@ INSERT INTO member (
     date_of_birth
 )
 VALUES (
-    999001,
+    9001,
     'Test Member 1',
     '010520-01-1234',
     'test001@email.com',
@@ -36,7 +36,7 @@ SELECT
     ic,
     TO_CHAR(date_of_birth, 'DD-MM-YYYY') AS date_of_birth
 FROM member
-WHERE member_id = 999001;
+WHERE member_id = 9001;
 
 
 PROMPT ============================================================
@@ -51,7 +51,7 @@ INSERT INTO member (
     date_of_birth
 )
 VALUES (
-    999002,
+    9002,
     'Test Member 2',
     '010520-01-5678',
     'test002@email.com',
@@ -71,7 +71,7 @@ INSERT INTO member (
     date_of_birth
 )
 VALUES (
-    999003,
+    9003,
     'Test Member 3',
     '010520011234',
     'test003@email.com',
@@ -85,7 +85,7 @@ PROMPT ============================================================
 
 UPDATE member
 SET date_of_birth = TO_DATE('25-05-2001', 'DD-MM-YYYY')
-WHERE member_id = 999001;
+WHERE member_id = 9001;
 
 
 PROMPT ============================================================
@@ -94,7 +94,7 @@ PROMPT ============================================================
 
 UPDATE member
 SET ic = '020620-01-1234'
-WHERE member_id = 999001;
+WHERE member_id = 9001;
 
 
 PROMPT ============================================================
@@ -107,9 +107,9 @@ SELECT
     ic,
     TO_CHAR(date_of_birth, 'DD-MM-YYYY') AS date_of_birth
 FROM member
-WHERE member_id = 999001;
+WHERE member_id = 9001;
 
 
 SET FEEDBACK ON
 
-DELETE FROM member WHERE member_id IN (999001, 999002, 999003);
+DELETE FROM member WHERE member_id IN (9001, 9002, 9003);
