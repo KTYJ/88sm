@@ -3,22 +3,51 @@
 -- ==========================================
 
 -- ------------------------------------------
--- 5.1 Block staff deletion when they have orders
+-- 5.1 Block expired members from placing orders or
+-- earning/redeeming points
 -- ------------------------------------------
-CREATE OR REPLACE TRIGGER trg_block_staff_deletion
-BEFORE DELETE ON staff
+DROP TRIGGER trg_block_staff_deletion;
+
+CREATE OR REPLACE TRIGGER trg_block_expired_member_order
+BEFORE INSERT ON orders
 FOR EACH ROW
 DECLARE
-    v_order_count NUMBER;
+    v_expiry_date member.expiry_date%TYPE;
 BEGIN
-    SELECT COUNT(*) INTO v_order_count
-    FROM orders
-    WHERE staff_id = :OLD.staff_id;
+    IF :NEW.member_id IS NOT NULL THEN
+        SELECT expiry_date INTO v_expiry_date
+        FROM member
+        WHERE member_id = :NEW.member_id;
 
-    IF v_order_count > 0 THEN
-        RAISE_APPLICATION_ERROR(-20030, 'Cannot delete staff: staff member has existing orders.');
+        IF v_expiry_date IS NOT NULL AND v_expiry_date < TRUNC(SYSDATE) THEN
+            RAISE_APPLICATION_ERROR(-20030, 'Cannot place order: member ' || :NEW.member_id ||
+                                     ' membership expired on ' || TO_CHAR(v_expiry_date, 'DD-MON-YYYY') || '.');
+        END IF;
     END IF;
-END trg_block_staff_deletion;
+END trg_block_expired_member_order;
+/
+
+CREATE OR REPLACE TRIGGER trg_expired_member_points
+BEFORE INSERT ON point_history
+FOR EACH ROW
+DECLARE
+    v_expiry_date member.expiry_date%TYPE;
+BEGIN
+    SELECT expiry_date INTO v_expiry_date
+    FROM member
+    WHERE member_id = :NEW.member_id;
+
+    IF v_expiry_date IS NOT NULL AND v_expiry_date < TRUNC(SYSDATE) THEN
+        RAISE_APPLICATION_ERROR(-20033, 'Cannot ' ||
+                                 CASE :NEW.transaction_type
+                                     WHEN 'Earned' THEN 'earn'
+                                     WHEN 'Used'   THEN 'redeem'
+                                     ELSE LOWER(:NEW.transaction_type)
+                                 END ||
+                                 ' points: member ' || :NEW.member_id ||
+                                 ' membership expired on ' || TO_CHAR(v_expiry_date, 'DD-MON-YYYY') || '.');
+    END IF;
+END trg_expired_member_points;
 /
 
 
