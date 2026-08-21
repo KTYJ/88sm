@@ -1,17 +1,18 @@
 -- cd "88sm"
--- @"0_resetData"
+@"0_resetData"
 @"1_createTable"
 @"2_sequence"
 @"3_insert"
 @"4_verify"
 
 --create index
-@"CXH/index/1/Index 1/index(procedure supplier).txt"
-@"CXH/index/1/index 2/CREATE INDEX idx_orders_member_date.txt"
+@"CXH/index/index.txt"
 
 @"LLW/index/index.txt"
 
 @"KHS/index/index.sql"
+
+@"Heng/index.sql"
 
 @"Ryan/Index.txt"
 
