@@ -11,6 +11,8 @@
 
 @"LLW/index/index.txt"
 
+@"KHS/index/index.sql"
+
 @"Ryan/Index.txt"
 
 @"TJY/index/index_tjy.sql"
