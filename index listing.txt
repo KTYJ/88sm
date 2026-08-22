@@ -1,7 +1,7 @@
 * idx_orders_date on orders(order_date) (tjy)
 * idx_stock_qty on branch_stock(stock_quantity)(tjy)
 * idx_procurement_date on procurement(procurement_date)(tjy)
-* idx_procurement_item on order_item(quantity * unit_price)(tjy)
+* idx_subtotal on order_item(quantity * unit_price)(tjy)
 
 * idx_redemption_voucher on REDEMPTION(voucher_id)(ryan)
 * idx_redemption_order on REDEMPTION(order_id)(ryan)
@@ -23,6 +23,12 @@
 
 
 * idx_voucher_expiry ON voucher (exp_date); (cxh)
-* idx_voucher_status ON voucher (voucher_status); (cxh)
 * idx_orders_member_date ON orders(member_id, order_date); (cxh)
 * idx_promotion_enddate ON promotion (end_date); (cxh)
+* idx_staff_branch ON staff(branch_id); (cxh)
+* idx_delivery_company ON delivery(company_id); (cxh)
+* idx_promotion_details_item ON promotion_details(item_id); (cxh)
+* idx_self_pickup_status ON self_pickup(pickup_status); (cxh)
+* idx_delivery_status ON delivery(delivery_status); (cxh)
+* idx_redemption_date ON redemption(redeemed_date); (cxh)
+* idx_pointhistory_date ON point_history(redemption_date); (cxh)

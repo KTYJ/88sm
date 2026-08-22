@@ -1,0 +1,36 @@
+-- ==========================================
+-- TRIGGERS FOR EXPIRY DATE VALIDATIONS
+-- ==========================================
+
+-- 1. Member Expiry Date Trigger
+CREATE OR REPLACE TRIGGER trg_member_exp_date
+BEFORE INSERT OR UPDATE ON member
+FOR EACH ROW
+BEGIN
+    IF :NEW.expiry_date IS NOT NULL AND :NEW.expiry_date < TRUNC(SYSDATE) THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Member expiry date cannot be earlier than the current date.');
+    END IF;
+END;
+/
+
+-- 2. Voucher Expiry Date Trigger
+CREATE OR REPLACE TRIGGER trg_voucher_exp_date
+BEFORE INSERT OR UPDATE ON voucher
+FOR EACH ROW
+BEGIN
+    IF :NEW.exp_date IS NOT NULL AND :NEW.exp_date < TRUNC(SYSDATE) THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Voucher expiration date cannot be earlier than the current date.');
+    END IF;
+END;
+/
+
+-- 3. Self Pickup Expiry Date Trigger
+CREATE OR REPLACE TRIGGER trg_self_pickup_exp_date
+BEFORE INSERT OR UPDATE ON self_pickup
+FOR EACH ROW
+BEGIN
+    IF :NEW.pickup_exp_date IS NOT NULL AND :NEW.pickup_exp_date < SYSDATE THEN
+        RAISE_APPLICATION_ERROR(-20003, 'Pickup expiration date and time cannot be earlier than the system timestamp.');
+    END IF;
+END;
+/

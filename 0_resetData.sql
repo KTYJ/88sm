@@ -2,7 +2,7 @@
 -- CLEAR ALL DATA & OBJECTS
 -- (Assuming starting from scratch)
 -- ==========================================
-
+set serveroutput on;
 BEGIN
     -- 1. Drop all procedures, functions, packages, views, triggers, sequences, and types
     FOR obj IN (

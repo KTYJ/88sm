@@ -6,6 +6,7 @@ SET LINESIZE 180
 SET PAGESIZE 1000
 SET FEEDBACK ON
 SET VERIFY OFF
+SET DEFINE ON
 SET NULL '-'
 
 -- ------------------------------------------

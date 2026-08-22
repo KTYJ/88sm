@@ -1,24 +1,29 @@
 CREATE INDEX idx_voucher_expiry
-ON voucher (exp_date);
+ON voucher(exp_date);
 
-
-CREATE INDEX idx_voucher_status
-ON voucher (voucher_status);
-
-
-CREATE INDEX idx_member_expiry
-ON member (expiry_date);
-
-CREATE INDEX idx_order_member
-ON orders (member_id);
-
-CREATE INDEX idx_order_date
-ON orders (order_date);
-
-CREATE INDEX idx_orderitem_item
-ON order_item (item_id);
-
-
+CREATE INDEX idx_orders_member_date
+ON orders(member_id, order_date);
 
 CREATE INDEX idx_promotion_enddate
-ON promotion (end_date);
+ON promotion(end_date);
+
+CREATE INDEX idx_staff_branch
+ON staff(branch_id);
+
+CREATE INDEX idx_delivery_company
+ON delivery(company_id);
+
+CREATE INDEX idx_promotion_details_item
+ON promotion_details(item_id);
+
+CREATE INDEX idx_self_pickup_status
+ON self_pickup(pickup_status);
+
+CREATE INDEX idx_delivery_status
+ON delivery(delivery_status);
+
+CREATE INDEX idx_redemption_date
+ON redemption(redeemed_date);
+
+CREATE INDEX idx_pointhistory_date
+ON point_history(redemption_date);

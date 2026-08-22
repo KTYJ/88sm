@@ -5,11 +5,6 @@ IS
 
     v_member_name member.name%TYPE;
 
-
-    /* ==========================================
-       OUTER CURSOR
-       ========================================== */
-
     CURSOR c_orders IS
 
         SELECT
@@ -23,11 +18,6 @@ IS
 
         ORDER BY
             o.order_date DESC;
-
-
-    /* ==========================================
-       INNER CURSOR
-       ========================================== */
 
     CURSOR c_vouchers (
         p_order_id orders.order_id%TYPE
@@ -56,10 +46,6 @@ IS
 
 BEGIN
 
-    /* ==========================================
-       GET MEMBER
-       ========================================== */
-
     SELECT name
 
     INTO v_member_name
@@ -67,11 +53,6 @@ BEGIN
     FROM member
 
     WHERE member_id = p_member_id;
-
-
-    /* ==========================================
-       REPORT HEADER
-       ========================================== */
 
     DBMS_OUTPUT.PUT_LINE(
         RPAD('=', 110, '=')
@@ -92,11 +73,6 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(
         RPAD('=', 110, '=')
     );
-
-
-    /* ==========================================
-       COLUMN HEADER
-       ========================================== */
 
     DBMS_OUTPUT.PUT_LINE(
 
@@ -119,17 +95,7 @@ BEGIN
         RPAD('-', 110, '-')
     );
 
-
-    /* ==========================================
-       OUTER CURSOR
-       ========================================== */
-
     FOR r_order IN c_orders LOOP
-
-
-        /* ======================================
-           INNER CURSOR
-           ====================================== */
 
         FOR r_voucher IN c_vouchers(
             r_order.order_id
@@ -203,11 +169,6 @@ BEGIN
 
     END LOOP;
 
-
-    /* ==========================================
-       NO RECORD MESSAGE
-       ========================================== */
-
     IF NOT v_found THEN
 
         DBMS_OUTPUT.PUT_LINE(
@@ -243,3 +204,6 @@ EXCEPTION
 
 END;
 /
+
+
+exec rpt_member_voucher_redemption(6014);

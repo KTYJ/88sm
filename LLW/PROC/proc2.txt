@@ -51,9 +51,9 @@ BEGIN
             p_voucher_id || '. Each voucher can be redeemed only once per member.');
     END IF;
 
-    -- Insert redemption record (R0001, R0002, ...) via sequence
+    -- Insert redemption record via sequence
     INSERT INTO redemption (redemption_id, voucher_id, order_id, redeemed_date)
-    VALUES ('R' || LPAD(seq_redemption_id.NEXTVAL, 4, '0'),
+    VALUES (seq_redemption_id.NEXTVAL,
             p_voucher_id, p_order_id, SYSTIMESTAMP);
 
     DBMS_OUTPUT.PUT_LINE('Voucher ' || p_voucher_id ||
