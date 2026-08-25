@@ -1,6 +1,7 @@
 -- ==========================================
 -- 1. DROP TABLES (Reverse Dependency Order)
 -- ==========================================
+DROP TABLE vip_renewal CASCADE CONSTRAINTS;
 DROP TABLE point_history CASCADE CONSTRAINTS;
 DROP TABLE self_pickup CASCADE CONSTRAINTS;
 DROP TABLE delivery CASCADE CONSTRAINTS;
@@ -43,7 +44,6 @@ CREATE TABLE member (
     email           VARCHAR2(40)    UNIQUE,
     address         VARCHAR2(255),
     date_of_birth   DATE,
-    expiry_date     DATE,
     points_balance  NUMBER(10)      DEFAULT 0,
     CONSTRAINT pk_member PRIMARY KEY (member_id),
     CONSTRAINT chk_member_ic CHECK (REGEXP_LIKE(ic, '^[0-9]{6}-[0-9]{2}-[0-9]{4}$')),
@@ -201,7 +201,8 @@ CREATE TABLE redemption (
     redeemed_date   TIMESTAMP       DEFAULT SYSDATE,
     CONSTRAINT pk_redemption PRIMARY KEY (redemption_id),
     CONSTRAINT fk_redemption_voucher FOREIGN KEY (voucher_id) REFERENCES voucher (voucher_id),
-    CONSTRAINT fk_redemption_order FOREIGN KEY (order_id) REFERENCES orders (order_id)
+    CONSTRAINT fk_redemption_order FOREIGN KEY (order_id) REFERENCES orders (order_id),
+    CONSTRAINT uq_redemption_order UNIQUE (order_id)
 );
 
 -- ==========================================
@@ -232,16 +233,31 @@ CREATE TABLE self_pickup (
     CONSTRAINT chk_pickup_status CHECK (pickup_status IN ('Completed', 'Ready', 'Preparing', 'Expired', 'Rescheduled', 'Cancelled'))
 );
 
+-- Point redemption rows are linked to the order that triggered them
+-- (order_id); member_id links the transaction back to the member.
 CREATE TABLE point_history (
     point_redemption_id NUMBER(10)  NOT NULL,
-    member_id           NUMBER(10)  NOT NULL,
+    order_id            NUMBER(10),
     amount              NUMBER(10)  NOT NULL,
-    transaction_type                VARCHAR2(10),
+    transaction_type    VARCHAR2(10),
     redemption_date     TIMESTAMP   DEFAULT SYSDATE,
     CONSTRAINT pk_point_history PRIMARY KEY (point_redemption_id),
-    CONSTRAINT fk_pointhistory_member FOREIGN KEY (member_id) REFERENCES member (member_id),
+    CONSTRAINT fk_pointhistory_order FOREIGN KEY (order_id) REFERENCES orders (order_id),
     CONSTRAINT chk_point_type CHECK (transaction_type IN ('Earned', 'Used')),
     CONSTRAINT chk_point_amount CHECK (amount > 0)
 );
+
+CREATE TABLE vip_renewal (
+    renewal_id       NUMBER(10)    NOT NULL,
+    member_id        NUMBER(10)      NOT NULL,
+    activation_date  TIMESTAMP       DEFAULT SYSDATE NOT NULL,
+    expiry_date      TIMESTAMP       NOT NULL,
+    renewal_fee      NUMBER(8,2)     DEFAULT 12.00 NOT NULL,
+    CONSTRAINT pk_vip_renewal PRIMARY KEY (renewal_id),
+    CONSTRAINT fk_vip_member FOREIGN KEY (member_id) REFERENCES member (member_id),
+    CONSTRAINT chk_renewal_fee CHECK (renewal_fee >= 0.00)
+);
+
+
 
 COMMIT;

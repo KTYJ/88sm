@@ -1,5 +1,5 @@
 CREATE OR REPLACE PROCEDURE sp_update_item_price (
-    p_item_id   IN item.item_id%TYPE,
+    p_i tem_id   IN item.item_id%TYPE,
     p_new_price IN item.unit_price%TYPE
 )
 IS
