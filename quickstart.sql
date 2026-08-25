@@ -47,6 +47,11 @@ commit;
 
 @"Heng/5_triggers.sql"
 
+
+--functions
+
+
+
 -- create view/query
 @"CXH/2/(1)View/Complete_vw_supplier_performance AS.txt"
 @"CXH/3/(1)View/member purchase behaviour.txt"

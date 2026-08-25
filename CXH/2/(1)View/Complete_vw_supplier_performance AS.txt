@@ -23,7 +23,7 @@ HAVING SUM(p.quantity * p.unit_cost) > 0;
 SET LINESIZE 180
 SET PAGESIZE 100
 
-COLUMN supplier_id              FORMAT 999        HEADING 'Supplier ID'
+COLUMN supplier_id              FORMAT 99999999        HEADING 'Supplier ID'
 COLUMN supplier_name            FORMAT A30       HEADING 'Supplier Name'
 COLUMN total_items_supplied     FORMAT 999       HEADING 'Items Supplied'
 COLUMN branches_supplied        FORMAT 999       HEADING 'Branches'
