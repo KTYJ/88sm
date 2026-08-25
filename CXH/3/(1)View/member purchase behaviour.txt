@@ -1,39 +1,50 @@
 CREATE OR REPLACE VIEW vw_member_purchase_behavior AS
-SELECT
-    m.member_id,
-    m.name,
-    m.email,
-    m.points_balance,
-    COUNT(DISTINCT o.order_id) AS total_orders,
-    COUNT(DISTINCT oi.item_id) AS different_items_purchased,
-    NVL(SUM(oi.quantity), 0) AS total_units_purchased,
-    fn_member_total_spending(m.member_id) AS total_spending,
-    NVL(AVG(oi.quantity * oi.unit_price), 0) AS average_line_spending
+SELECT 
+    m.member_id, 
+    m.name, 
+    m.email, 
+    m.points_balance, 
+    COUNT(DISTINCT o.order_id) AS total_orders, 
+    COUNT(DISTINCT oi.item_id) AS different_items_purchased, 
+    NVL(
+        SUM(oi.quantity), 
+        0
+    ) AS total_units_purchased, 
+    fn_member_total_spending(
+        m.member_id
+    ) AS total_spending, 
+    NVL(
+        AVG(oi.quantity * oi.unit_price), 
+        0
+    ) AS average_line_spending
 FROM member m
 LEFT JOIN orders o
     ON m.member_id = o.member_id
 LEFT JOIN order_item oi
     ON o.order_id = oi.order_id
-GROUP BY
-    m.member_id,
-    m.name,
-    m.email,
+LEFT JOIN item i
+    ON oi.item_id = i.item_id
+GROUP BY 
+    m.member_id, 
+    m.name, 
+    m.email, 
     m.points_balance
 HAVING COUNT(DISTINCT o.order_id) > 0;
 /
 
-SET LINESIZE 150
-SET PAGESIZE 50
-SET VERIFY OFF
 
-COLUMN member_id FORMAT 9999 HEADING 'ID'
-COLUMN name FORMAT A27 HEADING 'Member Name'
-COLUMN total_orders FORMAT 999 HEADING 'Orders'
-COLUMN different_items_purchased FORMAT 999 HEADING 'Items'
-COLUMN total_units_purchased FORMAT 999,999 HEADING 'Units'
-COLUMN total_spending FORMAT 999,999,990.00 HEADING 'Spending (RM)'
-COLUMN average_line_spending FORMAT 999,990.00 HEADING 'Avg Line (RM)'
-COLUMN customer_segment FORMAT A15 HEADING 'Segment'
+SET LINESIZE 220
+SET PAGESIZE 100
+
+COLUMN member_id                 FORMAT 9999              HEADING 'Member ID'
+COLUMN name                      FORMAT A30               HEADING 'Member Name'
+COLUMN total_orders              FORMAT 999                HEADING 'Total Orders'
+COLUMN different_items_purchased FORMAT 9999               HEADING 'Different Items'
+COLUMN total_units_purchased     FORMAT 999,999            HEADING 'Total Units'
+COLUMN total_spending            FORMAT 999,999,990.00     HEADING 'Total Spending (RM)'
+COLUMN average_line_spending FORMAT '999,999,990.00' HEADING 'Avg Line Spending'
+COLUMN customer_segment          FORMAT A20               HEADING 'Customer Segment'
+
 
 SELECT
     member_id,
@@ -44,11 +55,16 @@ SELECT
     total_spending,
     average_line_spending,
     CASE
-        WHEN total_spending >= 5000 THEN 'VIP CUSTOMER'
-        WHEN total_spending >= 2000 THEN 'HIGH VALUE'
-        WHEN total_spending >= 500 THEN 'REGULAR'
-        ELSE 'LOW ACTIVITY'
+        WHEN total_spending >= 5000 THEN
+            'VIP CUSTOMER'
+        WHEN total_spending >= 2000 THEN
+            'HIGH VALUE'
+        WHEN total_spending >= 500 THEN
+            'REGULAR'
+        ELSE
+            'LOW ACTIVITY'
     END AS customer_segment
 FROM vw_member_purchase_behavior
 WHERE total_orders > 0
-ORDER BY total_spending DESC;
+ORDER BY vw_member_purchase_behavior.total_spending DESC;
+
