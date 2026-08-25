@@ -49,7 +49,7 @@ commit;
 
 
 --functions
-
+@"CXH/FUCNTION/Member total spending.txt"
 
 
 -- create view/query
