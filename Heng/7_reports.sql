@@ -5,6 +5,11 @@
 -- Standalone schema functions (not nested in a procedure) so
 -- every report procedure in this file can reuse them.
 -- ------------------------------------------
+-- fn_center_str
+-- Description: Centers a string within the requested character width.
+-- Application: Used by fn_box_row to center report titles and messages.
+-- It returns blank padding for NULL text and prevents negative padding
+-- when the text is wider than the requested width.
 CREATE OR REPLACE FUNCTION fn_center_str (
     p_str   IN VARCHAR2,
     p_width IN NUMBER
@@ -24,6 +29,12 @@ BEGIN
 END fn_center_str;
 /
 
+-- fn_box_row
+-- Description: Formats text as a bordered report row with a fixed
+-- inner width of 96 characters. It supports left alignment by default
+-- and centered alignment when p_align is 'C'.
+-- Application: Used throughout Reports 7.1, 7.2, and 7.3 for titles,
+-- headings, data rows, totals, and end-of-report messages.
 CREATE OR REPLACE FUNCTION fn_box_row (
     p_text  IN VARCHAR2,
     p_align IN VARCHAR2 DEFAULT 'L'
@@ -38,6 +49,11 @@ BEGIN
 END fn_box_row;
 /
 
+-- fn_box_sep
+-- Description: Creates a horizontal separator 100 characters wide,
+-- including the two border characters.
+-- Application: Used throughout Reports 7.1, 7.2, and 7.3 to draw the
+-- top border, section separators, and bottom border.
 CREATE OR REPLACE FUNCTION fn_box_sep RETURN VARCHAR2 IS
 BEGIN
     RETURN '+' || RPAD('-', 98, '-') || '+';
