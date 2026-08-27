@@ -2,14 +2,6 @@ SET SERVEROUTPUT ON
 
 BEGIN
     proc_delivery_company_report(
-        DATE '2026-01-01',
-        DATE '2026-08-16'
-    );
-END;
-/
-
-BEGIN
-    proc_delivery_company_report(
         DATE '2026-07-01',
         DATE '2026-07-31'
     );
