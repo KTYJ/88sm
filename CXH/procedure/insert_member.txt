@@ -1,13 +1,11 @@
+set serveroutput on;
 BEGIN
     sp_register_member(
-        'John MwwMM',
-        '111111-01-0101',
-        'tttt@gmail.com',
+        'John ',
+        '051115-01-0101',
+        'ttpt@gmail.com',
         'Kuala Lumpur',
-        DATE '2005-01-15'
+        DATE '2005-11-15'
     );
 END;
 /
-
-SELECT *
-FROM member;

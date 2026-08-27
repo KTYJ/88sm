@@ -15,14 +15,15 @@ CREATE OR REPLACE PROCEDURE rp_mthly_spend_mem (v_top_n in NUMBER DEFAULT 10) IS
     
     -- cursor: top members by spending within a given calendar-month window
     CURSOR c_member(p_start DATE, p_end DATE) IS
-        SELECT m.member_id, m.name, m.email, m.points_balance, m.expiry_date,
+        SELECT m.member_id, m.name, m.email, m.points_balance,
+               (SELECT MAX(expiry_date) FROM vip_renewal v WHERE v.member_id = m.member_id) AS expiry_date,
                COUNT(DISTINCT o.order_id) AS order_count,
                NVL(SUM(oi.quantity * oi.unit_price), 0) AS total_spent
         FROM   member m
         JOIN orders o      ON o.member_id = m.member_id
         JOIN order_item oi ON oi.order_id = o.order_id
         WHERE  TRUNC(o.order_date) BETWEEN p_start AND p_end
-        GROUP BY m.member_id, m.name, m.email, m.points_balance, m.expiry_date
+        GROUP BY m.member_id, m.name, m.email, m.points_balance
         ORDER BY total_spent DESC;
 
 -- Cursor: most visited branch per member (returns 1 row - top branch)
@@ -191,25 +192,29 @@ v_box_sep VARCHAR2 (110) := '+' || RPAD('-', 108, '-') || '+';
 -- ============================================================
 -- FUNCTION get_member_status(p_expiry_date DATE)
 --
--- PURPOSE : Derives membership status label from expiry date.
--- INPUTS  : p_expiry_date - The member's membership expiry date
--- OUTPUT  : 'EXPIRED', 'EXPIRING SOON' (within 30 days), or 'ACTIVE'
+-- PURPOSE : Derives membership status label from VIP expiry date.
+-- INPUTS  : p_expiry_date - The member's VIP expiry date
+-- OUTPUT  : 'NON-VIP', 'VIP EXPIRED', 'VIP EXPIRING SOON' (within 30 days), or 'VIP ACTIVE'
 --
 -- EXAMPLE :
---   get_member_status(SYSDATE - 1)   => 'EXPIRED'
---   get_member_status(SYSDATE + 15)  => 'EXPIRING SOON'
---   get_member_status(SYSDATE + 60)  => 'ACTIVE'
+--   get_member_status(NULL)          => 'NON-VIP'
+--   get_member_status(SYSDATE - 1)   => 'VIP EXPIRED'
+--   get_member_status(SYSDATE + 15)  => 'VIP EXPIRING SOON'
+--   get_member_status(SYSDATE + 60)  => 'VIP ACTIVE'
 -- ============================================================
     FUNCTION get_member_status(p_expiry_date DATE) RETURN VARCHAR2 IS
     BEGIN
-        IF p_expiry_date < SYSDATE THEN
-            RETURN 'EXPIRED';
+        IF p_expiry_date IS NULL THEN
+            RETURN 'NON-VIP';
+        ELSIF p_expiry_date < SYSDATE THEN
+            RETURN 'VIP EXPIRED';
         ELSIF p_expiry_date < SYSDATE + 30 THEN
-            RETURN 'EXPIRING SOON';
+            RETURN 'VIP EXPIRING SOON';
         ELSE
-            RETURN 'ACTIVE';
+            RETURN 'VIP ACTIVE';
         END IF;
     END get_member_status;
+
 
 -- ================================================================================================================================
 BEGIN

@@ -1,6 +1,6 @@
 CREATE INDEX idx_redemption_voucher
 ON redemption(voucher_id);
 
-CREATE INDEX idx_redemption_order
-ON redemption(order_id);
+CREATE INDEX idx_point_history_date
+ON point_history(redemption_date);
 

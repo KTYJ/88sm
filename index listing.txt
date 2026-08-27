@@ -1,34 +1,66 @@
-* idx_orders_date on orders(order_date) (tjy)
-* idx_stock_qty on branch_stock(stock_quantity)(tjy)
-* idx_procurement_date on procurement(procurement_date)(tjy)
-* idx_subtotal on order_item(quantity * unit_price)(tjy)
+================================================================================
+                           88SM DATABASE INDEX LISTING
+================================================================================
 
-* idx_redemption_voucher on REDEMPTION(voucher_id)(ryan)
-* idx_redemption_order on REDEMPTION(order_id)(ryan)
-
-* idx_order_item_item on ORDER_ITEM(item_id)(lipwai)
-* idx_orders_type on ORDERS(order_type)(lipwai)
-
-* idx_branch_stock_item ON branch_stock(item_id)（housheng）
-* idx_procurement_supplier ON procurement(supplier_id)（housheng）
-* idx_procurement_item ON procurement(item_id)（housheng）
-* idx_orders_branch_member_date ON orders(branch_id, member_id, order_date)（housheng）
+--------------------------------------------------------------------------------
+1. TJY (Tan Jin Yuan) - TJY/index/index_tjy.sql
+--------------------------------------------------------------------------------
+* [SUCCESS] idx_orders_date         ON orders(order_date)
+* [SUCCESS] idx_stock_qty           ON branch_stock(stock_quantity)
+* [SUCCESS] idx_procurement_date    ON procurement(procurement_date)
+* [SUCCESS] idx_subtotal            ON order_item(quantity * unit_price)  [Function-Based]
 
 
-* idx_orders_branch ON orders(branch_id); (heng)
-* idx_orders_member ON orders(member_id); (heng)
-* idx_member_expiry ON member(expiry_date); (heng)
-* idx_procurement_branch_item ON procurement(branch_id, item_id); (heng)
-* idx_pointhistory_member ON point_history(member_id); (heng)
+--------------------------------------------------------------------------------
+2. Ryan (Ryan Ooi) - Ryan/Index.txt
+--------------------------------------------------------------------------------
+* [SUCCESS] idx_redemption_voucher  ON redemption(voucher_id)
+* [FAILED / CLASHED] idx_redemption_order ON redemption(order_id)
+    - Reason: ORA-01408: such column list already indexed.
+    - Cause: Column redemption(order_id) already has an implicit UNIQUE index created
+             by constraint UQ_REDEMPTION_ORDER in 1_createTable.sql.
 
 
-* idx_voucher_expiry ON voucher (exp_date); (cxh)
-* idx_orders_member_date ON orders(member_id, order_date); (cxh)
-* idx_promotion_enddate ON promotion (end_date); (cxh)
-* idx_staff_branch ON staff(branch_id); (cxh)
-* idx_delivery_company ON delivery(company_id); (cxh)
-* idx_promotion_details_item ON promotion_details(item_id); (cxh)
-* idx_self_pickup_status ON self_pickup(pickup_status); (cxh)
-* idx_delivery_status ON delivery(delivery_status); (cxh)
-* idx_redemption_date ON redemption(redeemed_date); (cxh)
-* idx_pointhistory_date ON point_history(redemption_date); (cxh)
+--------------------------------------------------------------------------------
+3. Lip Wai (Lee Lip Wai) - LLW/index/index.txt
+--------------------------------------------------------------------------------
+* [SUCCESS] idx_orders_type         ON orders(order_type)
+* [SUCCESS] idx_order_item_item     ON order_item(item_id)
+
+
+--------------------------------------------------------------------------------
+4. Hou Sheng (Khoo Hou Sheng) - KHS/index/index.sql
+--------------------------------------------------------------------------------
+* [SUCCESS] idx_branch_stock_item   ON branch_stock(item_id)
+* [SUCCESS] idx_procurement_item    ON procurement(item_id)
+
+
+--------------------------------------------------------------------------------
+5. Heng (Goh Yi Heng) - Heng/index_heng.sql
+--------------------------------------------------------------------------------
+* [FAILED / CLASHED] idx_heng_branch_stock_item ON branch_stock(item_id)
+    - Reason: ORA-01408: such column list already indexed.
+    - Cause: Duplicate of KHS's idx_branch_stock_item on the exact same column
+             branch_stock(item_id), which was created earlier in quickstart.sql.
+* [SUCCESS] idx_heng_order_item_item ON order_item(item_id, order_id)  [Composite]
+
+
+--------------------------------------------------------------------------------
+6. CXH (Chen Xiang Hui) - CXH/index/index.txt
+--------------------------------------------------------------------------------
+Active in script:
+* [SUCCESS] idx_procurement_supplier ON procurement(supplier_id)
+* [SUCCESS] idx_procurement_branch   ON procurement(branch_id)
+
+
+================================================================================
+                               SUMMARY OF CLASHES
+================================================================================
+1. idx_heng_branch_stock_item (Heng)
+   Clashes with: idx_branch_stock_item (KHS) on branch_stock(item_id).
+   Resolution: Redundant. KHS already created the index on this column.
+
+2. idx_redemption_order (Ryan)
+   Clashes with: UQ_REDEMPTION_ORDER constraint (1_createTable.sql).
+   Resolution: Redundant. Oracle automatically creates a unique index on order_id.
+================================================================================
