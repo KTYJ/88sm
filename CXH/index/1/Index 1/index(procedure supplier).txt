@@ -1,2 +1,0 @@
-CREATE INDEX idx_procurement_supplier
-ON procurement(supplier_id);

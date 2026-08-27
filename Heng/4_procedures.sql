@@ -11,7 +11,10 @@ CREATE OR REPLACE PROCEDURE proc_transfer_stock (
     p_item_id       IN branch_stock.item_id%TYPE,
     p_quantity      IN branch_stock.stock_quantity%TYPE
 ) AS
-    v_available branch_stock.stock_quantity%TYPE;
+    v_available         branch_stock.stock_quantity%TYPE;
+    v_item_name         item.item_name%TYPE;
+    v_from_branch_name  branch.branch_name%TYPE;
+    v_to_branch_name    branch.branch_name%TYPE;
 BEGIN
     IF p_from_branch = p_to_branch THEN
         RAISE_APPLICATION_ERROR(-20010, 'Source and destination branch cannot be the same.');
@@ -20,6 +23,14 @@ BEGIN
     IF p_quantity <= 0 THEN
         RAISE_APPLICATION_ERROR(-20011, 'Transfer quantity must be greater than zero.');
     END IF;
+
+    -- Multi-table lookup (old-style WHERE join) for descriptive names used in logging
+    SELECT i.item_name, bf.branch_name, bt.branch_name
+    INTO v_item_name, v_from_branch_name, v_to_branch_name
+    FROM item i, branch bf, branch bt
+    WHERE i.item_id = p_item_id
+      AND bf.branch_id = p_from_branch
+      AND bt.branch_id = p_to_branch;
 
     -- Lock and check source stock
     BEGIN
@@ -52,6 +63,22 @@ BEGIN
         VALUES (p_to_branch, p_item_id, p_quantity, SYSDATE);
     END IF;
 
+    DBMS_OUTPUT.PUT_LINE('Transferred ' || p_quantity || ' x ' || v_item_name ||
+                          ' from ' || v_from_branch_name || ' to ' || v_to_branch_name || '.');
+    DBMS_OUTPUT.PUT_LINE('Stock distribution for ' || v_item_name || ' across branches:');
+
+    FOR dist_rec IN (
+        SELECT b.branch_id, b.branch_name, SUM(bs.stock_quantity) AS branch_total
+        FROM branch_stock bs
+        JOIN branch b ON b.branch_id = bs.branch_id
+        WHERE bs.item_id = p_item_id
+        GROUP BY b.branch_id, b.branch_name
+        HAVING SUM(bs.stock_quantity) >= 0
+        ORDER BY branch_total DESC
+    ) LOOP
+        DBMS_OUTPUT.PUT_LINE('  ' || dist_rec.branch_name || ': ' || dist_rec.branch_total);
+    END LOOP;
+
     COMMIT;
 END proc_transfer_stock;
 /
@@ -67,7 +94,10 @@ CREATE OR REPLACE PROCEDURE proc_submit_procurement (
     p_quantity      IN procurement.quantity%TYPE,
     p_unit_cost     IN procurement.unit_cost%TYPE
 ) AS
-    v_procurement_id procurement.procurement_id%TYPE;
+    v_procurement_id  procurement.procurement_id%TYPE;
+    v_item_name       item.item_name%TYPE;
+    v_supplier_name   supplier.supplier_name%TYPE;
+    v_branch_name     branch.branch_name%TYPE;
 BEGIN
     IF p_quantity <= 0 THEN
         RAISE_APPLICATION_ERROR(-20020, 'Procurement quantity must be greater than zero.');
@@ -76,6 +106,14 @@ BEGIN
     IF p_unit_cost < 0 THEN
         RAISE_APPLICATION_ERROR(-20021, 'Unit cost cannot be negative.');
     END IF;
+
+    -- Multi-table lookup (old-style WHERE join) for descriptive names used in logging
+    SELECT i.item_name, s.supplier_name, b.branch_name
+    INTO v_item_name, v_supplier_name, v_branch_name
+    FROM item i, supplier s, branch b
+    WHERE i.item_id = p_item_id
+      AND s.supplier_id = p_supplier_id
+      AND b.branch_id = p_branch_id;
 
     v_procurement_id := seq_procurement_id.NEXTVAL;
 
@@ -98,17 +136,26 @@ BEGIN
         VALUES (p_branch_id, p_item_id, p_quantity, SYSDATE);
     END IF;
 
+    DBMS_OUTPUT.PUT_LINE('Procurement recorded: ' || p_quantity || ' x ' || v_item_name ||
+                          ' from ' || v_supplier_name || ' for ' || v_branch_name || '.');
+    DBMS_OUTPUT.PUT_LINE('Supplier comparison for ' || v_item_name || ':');
+
+    FOR sup_rec IN (
+        SELECT s.supplier_id, s.supplier_name,
+               COUNT(p.procurement_id)    AS times_ordered,
+               SUM(p.quantity)            AS total_quantity,
+               ROUND(AVG(p.unit_cost), 2) AS avg_cost
+        FROM procurement p
+        JOIN supplier s ON s.supplier_id = p.supplier_id
+        WHERE p.item_id = p_item_id
+        GROUP BY s.supplier_id, s.supplier_name
+        HAVING COUNT(p.procurement_id) >= 1
+        ORDER BY avg_cost ASC
+    ) LOOP
+        DBMS_OUTPUT.PUT_LINE('  ' || sup_rec.supplier_name || ': ' || sup_rec.times_ordered ||
+                              ' orders, avg cost ' || sup_rec.avg_cost);
+    END LOOP;
+
     COMMIT;
 END proc_submit_procurement;
 /
-
-commit;
-
---test
-SET SERVEROUTPUT ON;
--- Demo 1: Transfer 5 units of BA001 from Branch 1001 to Branch 1002
-EXEC proc_transfer_stock(1001, 1002, 'BA001', 5);
-
--- Demo 2: Procurement of 20 units of BEV001 for Branch 1001 from Supplier 5001
-EXEC proc_submit_procurement(1001, 'BEV001', 5001, 20, 3.50);
-

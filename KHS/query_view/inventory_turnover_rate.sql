@@ -53,7 +53,7 @@ LEFT JOIN current_stock_view bs
 
 SET PAGESIZE 200
 SET LINESIZE 160
-SET FEEDBACK OFF
+SET FEEDBACK on
 
 COLUMN category          FORMAT A20        HEADING 'Category'
 COLUMN quantity_sold     FORMAT 999,990    HEADING 'Qty Sold'

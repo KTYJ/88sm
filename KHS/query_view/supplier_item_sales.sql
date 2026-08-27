@@ -34,7 +34,7 @@ JOIN orders o
 
 SET PAGESIZE 200
 SET LINESIZE 160
-SET FEEDBACK OFF
+SET FEEDBACK on
 
 COLUMN supplier_name   FORMAT A30        HEADING 'Supplier'
 COLUMN item_name       FORMAT A25        HEADING 'Item'

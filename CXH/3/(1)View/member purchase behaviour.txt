@@ -10,9 +10,8 @@ SELECT
         SUM(oi.quantity), 
         0
     ) AS total_units_purchased, 
-    NVL(
-        SUM(oi.quantity * oi.unit_price), 
-        0
+    fn_member_total_spending(
+        m.member_id
     ) AS total_spending, 
     NVL(
         AVG(oi.quantity * oi.unit_price), 

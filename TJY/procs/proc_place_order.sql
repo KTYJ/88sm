@@ -138,7 +138,7 @@ BEGIN
         SELECT company_id
         INTO   v_company_id
         FROM   (SELECT company_id FROM delivery_company ORDER BY DBMS_RANDOM.VALUE)
-        WHERE  ROWNUM = 1;
+        WHERE  ROWNUM = 1;下·
 
         sp_create_update_delivery(
             p_order_id   => v_order_id, 

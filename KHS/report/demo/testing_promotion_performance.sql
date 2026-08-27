@@ -2,7 +2,7 @@ SET SERVEROUTPUT ON
 
 SET LINESIZE 120
 SET PAGESIZE 100
-SET FEEDBACK OFF
+SET FEEDBACK on
 SET VERIFY OFF
 
 PROMPT ==========================================================

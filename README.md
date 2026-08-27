@@ -8,7 +8,7 @@ This repository contains the complete Oracle PL/SQL database implementation for 
 
 | Step | Script Path in `quickstart.txt` | Description |
 |---|---|---|
-| **Reset Data** | `@"0_resetData"` | Deletes all records in reverse dependency order and drops all sequences. *(Commented out by default)* |
+| **Reset Data** | `@"0_resetData"` | Dynamically drops all schema objects (tables, procedures, views, triggers, sequences, etc.) for a clean slate. |
 | **Create Tables** | `@"1_createTable"` | Drops existing tables with cascade constraints and creates all 16 tables with complete PK, FK, and CHECK constraints. |
 | **Create Sequences** | `@"2_sequence"` | Creates 12 system sequences with dedicated start values and ranges. |
 | **Insert Data** | `@"3_insert"` | Seeds comprehensive master and transactional test data across all tables. |
@@ -219,13 +219,14 @@ This repository contains the complete Oracle PL/SQL database implementation for 
 
 ## 5. Indexes (INDEXES)
 
-| Member | Script Path in `quickstart.txt` | Index Name & Target Column(s) | Type |
+| Member | Script Path in `quickstart.sql` | Index Name & Target Column(s) | Type |
 |---|---|---|---|
-| **CXH (Chen Xiang Hui)** | `@"CXH/index/1/Index 1/index(procedure supplier).txt"` | `idx_procurement_supplier` ON `procurement(supplier_id)` | B-Tree |
-| **CXH (Chen Xiang Hui)** | `@"CXH/index/1/index 2/CREATE INDEX idx_orders_member_date.txt"` | `idx_orders_member_date` ON `orders(member_id, order_date)` | Composite B-Tree |
-| **LW (Lee Lip Wai)** | `@"LLW/index/index.txt"` | `idx_orders_type` ON `orders(order_type)`<br>`idx_order_item_item` ON `order_item(item_id)` | B-Tree |
+| **JY (Tan Jin Yuan)** | `@"TJY/index/index_tjy.sql"` | `idx_orders_date` ON `orders(order_date)`<br>`idx_stock_qty` ON `branch_stock(stock_quantity)`<br>`idx_procurement_date` ON `procurement(procurement_date)`<br>`idx_subtotal` ON `order_item(quantity * unit_price)` | B-Tree & Function-Based |
 | **Ryan (Ryan Ooi)** | `@"Ryan/Index.txt"` | `idx_redemption_voucher` ON `redemption(voucher_id)`<br>`idx_redemption_order` ON `redemption(order_id)` | B-Tree |
-| **JY (Tan Jin Yuan)** | `@"TJY/index/index_tjy.sql"` | `idx_orders_date` ON `orders(order_date)`<br>`idx_stock_qty` ON `branch_stock(stock_quantity)`<br>`idx_procurement_date` ON `procurement(procurement_date)`<br>`idx_procurement_item` ON `procurement(item_id)`<br>`idx_subtotal` ON `order_item(quantity * unit_price)` | B-Tree & Function-Based |
+| **LW (Lee Lip Wai)** | `@"LLW/index/index.txt"` | `idx_order_item_item` ON `order_item(item_id)`<br>`idx_orders_type` ON `orders(order_type)` | B-Tree |
+| **KHS (Khoo Hou Sheng)** | `@"KHS/index/index.sql"` | `idx_branch_stock_item` ON `branch_stock(item_id)`<br>`idx_procurement_supplier` ON `procurement(supplier_id)`<br>`idx_procurement_item` ON `procurement(item_id)`<br>`idx_orders_branch_member_date` ON `orders(branch_id, member_id, order_date)` | B-Tree / Composite |
+| **Heng (Heng Tian Li)** | `@"Heng/index.sql"` | `idx_orders_branch` ON `orders(branch_id)`<br>`idx_orders_member` ON `orders(member_id)`<br>`idx_member_expiry` ON `member(expiry_date)`<br>`idx_procurement_branch_item` ON `procurement(branch_id, item_id)`<br>`idx_pointhistory_member` ON `point_history(member_id)` | B-Tree / Composite |
+| **CXH (Chen Xiang Hui)** | `@"CXH/index/index.txt"` | `idx_voucher_expiry` ON `voucher(exp_date)`<br>`idx_orders_member_date` ON `orders(member_id, order_date)`<br>`idx_promotion_enddate` ON `promotion(end_date)`<br>`idx_staff_branch` ON `staff(branch_id)`<br>`idx_delivery_company` ON `delivery(company_id)`<br>`idx_promotion_details_item` ON `promotion_details(item_id)`<br>`idx_self_pickup_status` ON `self_pickup(pickup_status)`<br>`idx_delivery_status` ON `delivery(delivery_status)`<br>`idx_redemption_date` ON `redemption(redeemed_date)`<br>`idx_pointhistory_date` ON `point_history(redemption_date)` | B-Tree / Composite |
 
 ---
 
