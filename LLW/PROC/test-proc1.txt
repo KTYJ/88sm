@@ -1,0 +1,28 @@
+INSERT INTO orders (order_id, member_id, staff_id, branch_id, order_date, order_type)
+VALUES (122098, 6001, 4001, 1001, SYSDATE, 'Delivery');
+COMMIT;
+
+SET LINESIZE 150
+SET PAGESIZE 50
+
+COLUMN delivery_id FORMAT 999999 HEADING "DELIVERY_ID"
+COLUMN order_id FORMAT 999999 HEADING "ORDER_ID"
+COLUMN company_id FORMAT 99999 HEADING "COMPANY_ID"
+COLUMN delivery_address FORMAT A35 HEADING "DELIVERY_ADDRESS"
+COLUMN delivery_status FORMAT A15 HEADING "DELIVERY_STATUS"
+
+EXEC sp_create_update_delivery(p_order_id => 122098, p_company_id => 2001, p_address => 'No. 8, Jalan Test, Cheras', p_new_status => 'Preparing');
+
+SELECT o.order_id, o.order_type, d.delivery_id, d.company_id, d.delivery_address, d.delivery_status
+FROM   orders o JOIN delivery d ON d.order_id = o.order_id
+WHERE  o.order_id = 122098;
+
+EXEC sp_create_update_delivery(p_delivery_id => 58834, p_new_status => 'Pending');
+
+SELECT o.order_id, o.order_type, d.delivery_id, d.company_id, d.delivery_address, d.delivery_status
+FROM   orders o JOIN delivery d ON d.order_id = o.order_id
+WHERE  o.order_id = 122098;
+
+DELETE FROM delivery WHERE order_id = 122098;
+DELETE FROM orders   WHERE order_id = 122098;
+COMMIT;

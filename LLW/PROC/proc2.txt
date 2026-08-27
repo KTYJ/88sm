@@ -1,72 +1,137 @@
-CREATE OR REPLACE PROCEDURE sp_redeem_voucher (
-    p_voucher_id  IN voucher.voucher_id%TYPE,
-    p_order_id    IN redemption.order_id%TYPE,
-    p_member_id   IN orders.member_id%TYPE
+CREATE OR REPLACE PROCEDURE sp_create_update_delivery (
+    p_delivery_id   IN delivery.delivery_id%TYPE DEFAULT NULL,
+    p_order_id      IN delivery.order_id%TYPE   DEFAULT NULL,
+    p_company_id    IN delivery.company_id%TYPE DEFAULT NULL,
+    p_address       IN delivery.delivery_address%TYPE DEFAULT NULL,
+    p_new_status    IN delivery.delivery_status%TYPE DEFAULT 'Pending',
+    p_use_points    IN VARCHAR2 DEFAULT 'N'
 ) AS
-    v_exp_date     voucher.exp_date%TYPE;
-    v_order_member orders.member_id%TYPE;
-    v_member_cnt   NUMBER;
-    v_redeemed     NUMBER;
+    v_current_status  delivery.delivery_status%TYPE;
+    v_cnt             NUMBER;
+    v_new_id          delivery.delivery_id%TYPE;
+    v_charge          delivery_company.delivery_charge%TYPE;
+    v_order_member    orders.member_id%TYPE;
 BEGIN
-    -- Validation 1: voucher must exist and not be expired
-    SELECT exp_date INTO v_exp_date
-    FROM   voucher
-    WHERE  voucher_id = p_voucher_id;
-
-    IF v_exp_date < SYSDATE THEN
-        RAISE_APPLICATION_ERROR(-20040, 'This voucher has expired on ' ||
-            TO_CHAR(v_exp_date, 'DD-MM-YYYY'));
+    -- Validation 1: status must be valid (both modes)
+    IF p_new_status NOT IN ('Delivered', 'Out for Delivery',
+                            'Pending', 'Preparing', 'Cancelled') THEN
+        RAISE_APPLICATION_ERROR(-20050, 'Invalid delivery status value.');
     END IF;
 
-    -- Validation 2: member must exist
-    SELECT COUNT(*)
-    INTO   v_member_cnt
-    FROM   member
-    WHERE  member_id = p_member_id;
+    IF p_delivery_id IS NULL THEN
+        -- ================= CREATE MODE =================
 
-    IF v_member_cnt = 0 THEN
-        RAISE_APPLICATION_ERROR(-20041, 'Member ' || p_member_id || ' does not exist.');
+        -- Validation 2: order must exist
+        SELECT COUNT(*) INTO v_cnt FROM orders WHERE order_id = p_order_id;
+        IF v_cnt = 0 THEN
+            RAISE_APPLICATION_ERROR(-20053, 'Order ' || p_order_id || ' does not exist.');
+        END IF;
+
+        -- Validation 3: one delivery per order (delivery.order_id is UNIQUE)
+        SELECT COUNT(*) INTO v_cnt FROM delivery WHERE order_id = p_order_id;
+        IF v_cnt > 0 THEN
+            RAISE_APPLICATION_ERROR(-20054, 'Order ' || p_order_id ||
+                ' already has a delivery record.');
+        END IF;
+
+        -- Validation 4: company must exist
+        SELECT COUNT(*) INTO v_cnt FROM delivery_company WHERE company_id = p_company_id;
+        IF v_cnt = 0 THEN
+            RAISE_APPLICATION_ERROR(-20055, 'Company ' || p_company_id || ' does not exist.');
+        END IF;
+
+        -- Validation 5: address cannot be empty
+        IF LENGTH(TRIM(p_address)) = 0 THEN
+            RAISE_APPLICATION_ERROR(-20056, 'Delivery address cannot be empty.');
+        END IF;
+
+        -- Validation 6: p_use_points must be Y or N
+        IF UPPER(p_use_points) NOT IN ('Y', 'N') THEN
+            RAISE_APPLICATION_ERROR(-20057, 'p_use_points must be Y or N.');
+        END IF;
+
+        -- Get the chosen company's delivery charge
+        SELECT NVL(delivery_charge, 0) INTO v_charge
+        FROM   delivery_company
+        WHERE  company_id = p_company_id;
+
+        -- Points offset: the member can pay the delivery charge with
+        -- points (100 points = RM1). Check whether the charge can be
+        -- offset; if yes, call the point redemption to record the
+        -- 'Used' transaction against this order.
+        IF UPPER(p_use_points) = 'Y' THEN
+            SELECT member_id INTO v_order_member
+            FROM   orders
+            WHERE  order_id = p_order_id;
+
+            IF v_order_member IS NULL THEN
+                RAISE_APPLICATION_ERROR(-20059,
+                    'Walk-in orders have no points account - the delivery charge cannot be offset.');
+            END IF;
+
+            IF v_charge > 0 THEN
+                -- Raises -20123 if the member has insufficient points
+                sp_redeem_member_points(p_order_id, ROUND(v_charge * 100));
+
+                DBMS_OUTPUT.PUT_LINE('Delivery charge RM' ||
+                    TO_CHAR(v_charge, '990.00') ||
+                    ' offset with points for order ' || p_order_id || '.');
+            ELSE
+                DBMS_OUTPUT.PUT_LINE('Delivery is already free (charge 0) - no points needed.');
+            END IF;
+        END IF;
+
+        -- Generate id (MAX+1 for the demo; production pattern uses
+        -- seq_delivery_id from 2_sequence.sql)
+        SELECT NVL(MAX(delivery_id), 0) + 1 INTO v_new_id FROM delivery;
+
+        INSERT INTO delivery (delivery_id, order_id, company_id,
+                              delivery_address, delivery_date, delivery_status)
+        VALUES (v_new_id, p_order_id, p_company_id, TRIM(p_address),
+                CASE WHEN p_new_status = 'Delivered'
+                     THEN SYSTIMESTAMP ELSE NULL END,   -- date only when Delivered
+                p_new_status);
+
+        DBMS_OUTPUT.PUT_LINE('Delivery ' || v_new_id ||
+            ' created for order ' || p_order_id || ' [' || p_new_status || ']');
+    ELSE
+        -- ================= UPDATE MODE =================
+
+        SELECT delivery_status INTO v_current_status
+        FROM   delivery
+        WHERE  delivery_id = p_delivery_id;
+
+        -- Validation: delivered orders cannot be changed
+        IF v_current_status = 'Delivered' THEN
+            RAISE_APPLICATION_ERROR(-20051, 'Delivered orders cannot be modified.');
+        END IF;
+
+        -- Status update + date rule:
+        --   -> Delivered : set delivery_date = SYSTIMESTAMP
+        --   -> Cancelled : clear delivery_date
+        --   -> otherwise : keep existing date
+        UPDATE delivery
+        SET    delivery_status = p_new_status,
+               delivery_date = CASE
+                   WHEN p_new_status = 'Delivered' THEN SYSTIMESTAMP
+                   WHEN p_new_status = 'Cancelled'  THEN NULL
+                   ELSE delivery_date
+               END
+        WHERE  delivery_id = p_delivery_id;
+
+        DBMS_OUTPUT.PUT_LINE('Delivery ' || p_delivery_id ||
+            ' status updated: ' || v_current_status || ' -> ' || p_new_status);
     END IF;
 
-    -- Validation 3: order must belong to this member (if member order)
-    SELECT member_id INTO v_order_member
-    FROM   orders
-    WHERE  order_id = p_order_id;
-
-    IF v_order_member IS NOT NULL AND v_order_member <> p_member_id THEN
-        RAISE_APPLICATION_ERROR(-20042, 'This order does not belong to the member.');
-    END IF;
-
-    -- Validation 4: one-time use - this member must not have
-    -- redeemed this voucher before
-    SELECT COUNT(*) INTO v_redeemed
-    FROM   redemption r
-    JOIN   orders o ON r.order_id = o.order_id
-    WHERE  r.voucher_id = p_voucher_id
-    AND    o.member_id = p_member_id;
-
-    IF v_redeemed > 0 THEN
-        RAISE_APPLICATION_ERROR(-20044,
-            'Member ' || p_member_id || ' has already redeemed voucher ' ||
-            p_voucher_id || '. Each voucher can be redeemed only once per member.');
-    END IF;
-
-    -- Insert redemption record via sequence
-    INSERT INTO redemption (redemption_id, voucher_id, order_id, redeemed_date)
-    VALUES (seq_redemption_id.NEXTVAL,
-            p_voucher_id, p_order_id, SYSTIMESTAMP);
-
-    DBMS_OUTPUT.PUT_LINE('Voucher ' || p_voucher_id ||
-        ' redeemed for order ' || p_order_id);
     COMMIT;
 EXCEPTION
     WHEN NO_DATA_FOUND THEN
-        RAISE_APPLICATION_ERROR(-20043, 'Voucher or order not found.');
+        RAISE_APPLICATION_ERROR(-20052, 'Delivery record not found.');
     WHEN OTHERS THEN
         IF SQLCODE BETWEEN -20999 AND -20000 THEN
             RAISE;
         ELSE
-            RAISE_APPLICATION_ERROR(-20905, 'sp_redeem_voucher failed: ' || SQLERRM);
+            RAISE_APPLICATION_ERROR(-20906, 'sp_create_update_delivery failed: ' || SQLERRM);
         END IF;
 END;
 /

@@ -1,0 +1,12 @@
+SELECT branch_id, item_id, stock_quantity
+FROM   branch_stock WHERE branch_id = 1001 AND item_id = 'RI001';
+INSERT INTO orders (order_id, member_id, staff_id, branch_id, order_date, order_type)
+VALUES (122004, NULL, 4001, 1001, SYSTIMESTAMP, 'In Store');
+INSERT INTO order_item (order_id, item_id, quantity, unit_price)
+VALUES (122004, 'RI001', 2, 23.60);
+SELECT branch_id, item_id, stock_quantity
+FROM   branch_stock WHERE branch_id = 1001 AND item_id = 'RI001';
+DELETE FROM order_item WHERE order_id = 122004 AND item_id = 'RI001';
+SELECT branch_id, item_id, stock_quantity
+FROM   branch_stock WHERE branch_id = 1001 AND item_id = 'RI001';
+ROLLBACK;
