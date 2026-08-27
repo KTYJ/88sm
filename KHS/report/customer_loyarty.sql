@@ -201,7 +201,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('BRANCH: ' || v_branch_name);
     DBMS_OUTPUT.PUT_LINE('===============================================================================================');
     DBMS_OUTPUT.PUT_LINE(RPAD('Rank', 6) || RPAD('Customer', 25) || LPAD('Recency (Days)', 15) || LPAD('Frequency (Orders)', 20) || LPAD('Monetary (RM)', 17) || LPAD('RFM Score', 12));
-    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------------------------------------------------');
 
     FOR i IN 1 .. v_customer_count LOOP
         IF p_ranking IS NOT NULL AND v_rfm(i).rfm_score < p_ranking THEN
@@ -218,7 +218,7 @@ BEGIN
         );
     END LOOP;
 
-    DBMS_OUTPUT.PUT_LINE('--------------------------------------------------------------------------------');
+    DBMS_OUTPUT.PUT_LINE('-----------------------------------------------------------------------------------------------');
 
     IF p_ranking IS NULL THEN
         DBMS_OUTPUT.PUT_LINE('Customers Shown: ' || v_customer_count);
@@ -227,7 +227,7 @@ BEGIN
         DBMS_OUTPUT.PUT_LINE('Minimum RFM Score: ' || p_ranking);
     END IF;
 
-    DBMS_OUTPUT.PUT_LINE('================================================================================');
+    DBMS_OUTPUT.PUT_LINE('==============================================================================================');
 
 EXCEPTION
     WHEN NO_DATA_FOUND THEN

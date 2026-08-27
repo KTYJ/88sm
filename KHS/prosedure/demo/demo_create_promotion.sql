@@ -56,4 +56,4 @@ SELECT
 FROM promotion p
 JOIN promotion_details pd
     ON p.promotion_id = pd.promotion_id
-WHERE p.promotion_id = 5041;
+WHERE pd.item_id IN ('BA001', 'COF001');
