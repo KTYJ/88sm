@@ -22,7 +22,7 @@ CREATE OR REPLACE PROCEDURE test_order (
         DELETE FROM voucher        WHERE voucher_id = 'V9001';
         DELETE FROM promotion_details WHERE promotion_id = 9001;
         DELETE FROM promotion      WHERE promotion_id = 9001;
-        DELETE FROM point_history  WHERE member_id = 9001;
+        DELETE FROM point_history  WHERE order_id = 9001;
         DELETE FROM self_pickup    WHERE order_id IN (SELECT order_id FROM orders WHERE branch_id = 9001) OR order_id = 9001;
         DELETE FROM order_item     WHERE order_id IN (SELECT order_id FROM orders WHERE branch_id = 9001) OR order_id = 9001;
         DELETE FROM orders         WHERE branch_id = 9001 OR order_id = 9001;
