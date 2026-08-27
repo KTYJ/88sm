@@ -12,7 +12,7 @@
 
 @"KHS/index/index.sql"
 
-@"Heng/index_heng.sql"
+@"Heng/index.sql"
 
 @"Ryan/Index.txt"
 
@@ -30,8 +30,11 @@ commit;
 @"Ryan/(Trigger1)test.txt"
 @"Ryan/(Trigger2)test.txt"
 
-@"LLW/trig/trig1.txt"
-@"LLW/trig/trig2.txt"
+@"LLW/trig/trg_order_item_stock_restore.txt"
+@"LLW/trig/trg_stock_low_alert.txt"
+
+@"LLW/trig/test-trg_order_item_stock_restore.txt"
+@"LLW/trig/test-trg_stock_low_alert.txt"
 
 @"KHS/trigger/trg_member_ic_dob.sql"
 @"KHS/trigger/trg_promotion_discount_price.sql"
@@ -42,27 +45,27 @@ commit;
 @"KHS/trigger/demo/testing_trg_promotion_discount_price.sql"
 commit;
 
-@"CXH/6(trigger)/trigger/Prevent selling below procurement cost.txt"
-@"CXH/6(trigger)/trigger/expiry_trigger.txt"
+@"CXH/trigger/Prevent selling below procurement cost.txt"
+@"CXH/trigger/expiry_trigger.txt"
 
 @"Heng/5_triggers.sql"
 
 
 --functions
-@"CXH/FUCNTION/Member total spending.txt"
+@"CXH/Function/Member total spending.txt"
 
 
 -- create view/query
-@"CXH/2/(1)View/Complete_vw_supplier_performance AS.txt"
-@"CXH/3/(1)View/member purchase behaviour.txt"
+@"CXH/queryview/Complete_vw_supplier_performance AS.txt"
+@"CXH/queryview/member purchase behaviour.txt"
 
 @"KHS/query_view/inventory_turnover_rate.sql"
 @"KHS/query_view/supplier_item_sales.sql"
 
 @"Heng/6_queries.sql"
 
-@"LLW/query/query1.txt"
-@"LLW/query/query2.txt"
+@"LLW/query/order_type_trend.txt"
+@"LLW/query/top_selling_items.txt"
 
 @"Ryan/(Query1)VoucherEffectiveness.txt"
 @"Ryan/(Query2)Item Price & Sales Performance.txt"
@@ -72,17 +75,18 @@ commit;
 
 
 -- proc
-@"CXH/5(procedure)/procedure/register new member.txt"
-@"CXH/5(procedure)/procedure/update item price.txt"
-@"CXH/5(procedure)/test/test 1.txt"
-@"CXH/5(procedure)/test/test 2.txt"
-@"CXH/5(procedure)/test/change item price.txt"
-@"CXH/5(procedure)/test/find item.txt"
+@"CXH/procs/register new member.txt"
+@"CXH/procs/update item price.txt"
+@"CXH/procs/member_testing.txt"
+@"CXH/procs/change item price.txt"
 
 @"Heng/4_procedures.sql"
 
-@"LLW/proc/proc1.txt"
-@"LLW/proc/proc2.txt"
+@"LLW/PROC/sp_create_update_delivery.txt"
+@"LLW/PROC/sp_redeem_voucher.txt"
+
+@"LLW/PROC/test-sp_create_update_delivery.txt"
+@"LLW/PROC/test-sp_redeem_voucher.txt"
 
 @"KHS/prosedure/create_order_item.sql"
 @"KHS/prosedure/create_promotion.sql"
@@ -104,6 +108,8 @@ commit;
 --report
 @"CXH/report/Member voucher redemption.txt"
 @"CXH/report/supplier procurement summary.txt"
+@"CXH/report/redemtion_testing.txt"
+@"CXH/report/supplier_testing.txt"
 
 @"Heng/7_reports.sql"
 
@@ -112,8 +118,8 @@ commit;
 @"KHS/report/promotion_performance.sql"
 @"KHS/report/demo/demo_promotion_performance.sql"
 
-@"LLW/report/report1.txt"
-@"LLW/report/report2.txt"
+@"LLW/report/rpt_category_sales_summary.txt"
+@"LLW/report/rpt_top_members_summary.txt"
 
 @"Ryan/(Report 1)Delivery Company Performance Report.txt"
 @"Ryan/(Report 2)Member Point Activity Report.txt"
