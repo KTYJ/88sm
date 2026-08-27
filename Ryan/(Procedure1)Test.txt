@@ -1,7 +1,12 @@
-SET SERVEROUTPUT ON;
+CL SCR
+SET SERVEROUTPUT ON
+SET LINESIZE 160
+SET PAGESIZE 100
 
+-- Check sample members
 SELECT member_id, name
 FROM member
 WHERE ROWNUM <= 5;
 
+-- Test valid member
 EXEC proc_member_order_history(6001);
