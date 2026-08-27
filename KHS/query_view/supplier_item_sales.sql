@@ -1,5 +1,5 @@
 -- ================================================================
--- SUPPLIER ITEM SALES PERFORMANCE REPORT
+-- SUPPLIER ITEM SALES PERFORMANCE
 -- ================================================================
 
 -- ================================================================
@@ -29,27 +29,35 @@ JOIN orders o
 
 
 -- ================================================================
--- 2. REPORT FORMATTING
+-- 2. FORMATTING
 -- ================================================================
 
 SET PAGESIZE 200
-SET LINESIZE 160
+SET LINESIZE 72
 SET FEEDBACK on
 
-COLUMN supplier_name   FORMAT A30        HEADING 'Supplier'
-COLUMN item_name       FORMAT A25        HEADING 'Item'
-COLUMN category        FORMAT A20        HEADING 'Category'
-COLUMN quantity_sold   FORMAT 999,990    HEADING 'Qty Sold'
-COLUMN total_sales     FORMAT 999,990.00 HEADING 'Sales (RM)'
+-- ================================================================
+--  TITLE
+-- ================================================================
+
+TTITLE CENTER 'SUPPLIER ITEM SALES PERFORMANCE' SKIP 1 -
+       CENTER 'PREVIOUS MONTH SALES BY SUPPLIER AND CATEGORY' SKIP 2
 
 
 -- ================================================================
--- 3. SUPPLIER ITEM SALES REPORT
+-- COLUMN FORMATTING
 -- ================================================================
 
-PROMPT =================================================================
-PROMPT                 SUPPLIER ITEM SALES PERFORMANCE
-PROMPT =================================================================
+COLUMN supplier_name FORMAT A30 HEADING 'Supplier'
+COLUMN category FORMAT A20 HEADING 'Category'
+COLUMN quantity_sold FORMAT 999,990 HEADING 'Qty Sold'
+COLUMN total_sales FORMAT 999,990.00 HEADING 'Sales (RM)'
+
+
+
+-- ================================================================
+-- 3. SUPPLIER ITEM SALES
+-- ================================================================
 
 SELECT
     supplier_name,

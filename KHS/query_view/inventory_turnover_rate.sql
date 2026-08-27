@@ -49,23 +49,37 @@ LEFT JOIN weighted_avg_cost_view pc
 LEFT JOIN current_stock_view bs
     ON i.item_id = bs.item_id;
 
+-- ================================================================
+-- FORMATTING
+-- ===============================================================
 
-
-SET PAGESIZE 200
-SET LINESIZE 160
+SET PAGESIZE 100
+SET LINESIZE 95
 SET FEEDBACK on
 
-COLUMN category          FORMAT A20        HEADING 'Category'
-COLUMN quantity_sold     FORMAT 999,990    HEADING 'Qty Sold'
-COLUMN total_cogs        FORMAT 999,990.00 HEADING 'COGS (RM)'
-COLUMN current_stock     FORMAT 999,990    HEADING 'Current Stock'
-COLUMN inventory_value   FORMAT 999,990.00 HEADING 'Inventory Value (RM)'
-COLUMN turnover_ratio    FORMAT 990.00     HEADING 'Turnover Ratio'
+-- =========================================================
+-- TITLE
+-- =========================================================
 
-PROMPT ================================================================
-PROMPT                    INVENTORY TURNOVER ANALYSIS
-PROMPT                    BY CATEGORY - PREVIOUS MONTH
-PROMPT ================================================================
+TTITLE CENTER 'INVENTORY TURNOVER ANALYSIS' SKIP 1 -
+       CENTER 'BY CATEGORY - PREVIOUS MONTH' SKIP 2
+
+
+-- =========================================================
+-- COLUMN FORMATTING
+-- =========================================================
+
+COLUMN category FORMAT A20 HEADING 'Category'
+COLUMN quantity_sold FORMAT 999,990 HEADING 'Qty Sold'
+COLUMN total_cogs FORMAT 999,990.00 HEADING 'COGS (RM)'
+COLUMN current_stock FORMAT 999,990 HEADING 'Current Stock'
+COLUMN inventory_value FORMAT 999,990.00 HEADING 'Inventory Value (RM)'
+COLUMN turnover_ratio FORMAT 990.00 HEADING 'Turnover Ratio'
+
+
+-- =========================================================
+-- DISPLAY
+-- =========================================================
 
 SELECT
     category,
@@ -79,9 +93,22 @@ SELECT
         ELSE SUM(total_cogs) / SUM(inventory_value)
     END AS turnover_ratio
 FROM inventory_turnover_rate_view
-WHERE category IN ('Frozen', 'Groceries', 'Dairy', 'Bakery', 'Canned Food', 'Snacks') 
+WHERE category IN (
+    'Frozen',
+    'Groceries',
+    'Dairy',
+    'Bakery',
+    'Canned Food',
+    'Snacks'
+)
 GROUP BY category
 HAVING SUM(quantity_sold) > 200
 ORDER BY turnover_ratio DESC;
 
+
+-- =========================================================
+-- CLEAN UP
+-- =========================================================
+
+TTITLE OFF
 SET FEEDBACK ON
