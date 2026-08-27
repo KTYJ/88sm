@@ -4,6 +4,33 @@ SET DEFINE OFF
 SET LINESIZE 120;
 
 -- =============================================================================
+-- FUNCTION: fn_delivery_completion_rate
+-- Purpose: Calculate delivery completion rate as a percentage.
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION fn_delivery_completion_rate (
+    p_delivered IN NUMBER,
+    p_total     IN NUMBER
+)
+RETURN NUMBER
+IS
+BEGIN
+
+    -- Avoid division by zero
+    IF p_total = 0 THEN
+        RETURN 0;
+    END IF;
+
+    RETURN ROUND(
+        (p_delivered * 100) / p_total,
+        2
+    );
+
+END;
+/
+ 
+
+-- =============================================================================
 -- REPORT 1: DELIVERY COMPANY PERFORMANCE REPORT
 -- By: Ryan
 -- Cursor: Single cursor
@@ -58,15 +85,15 @@ CREATE OR REPLACE PROCEDURE proc_delivery_company_report (
                 END
             ) AS preparing,
 
-            ROUND(
+            fn_delivery_completion_rate(
                 SUM(
                     CASE
                         WHEN d.delivery_status = 'Delivered'
                         THEN 1
                         ELSE 0
                     END
-                ) * 100 / COUNT(d.delivery_id),
-                2
+                ),
+                COUNT(d.delivery_id)
             ) AS completion_rate
 
         FROM delivery_company dc
@@ -136,7 +163,7 @@ BEGIN
     -- ============================================================
 
     DBMS_OUTPUT.PUT_LINE(
-        '=========================================================================='
+        '==========================================================================' 
     );
 
     DBMS_OUTPUT.PUT_LINE(
@@ -144,7 +171,7 @@ BEGIN
     );
 
     DBMS_OUTPUT.PUT_LINE(
-        '=========================================================================='
+        '==========================================================================' 
     );
 
     DBMS_OUTPUT.PUT_LINE(
@@ -160,7 +187,7 @@ BEGIN
     );
 
     DBMS_OUTPUT.PUT_LINE(
-        '=========================================================================='
+        '==========================================================================' 
     );
 
 
@@ -221,7 +248,13 @@ BEGIN
             LPAD(TO_CHAR(v_out_for_delivery), 8) ||
             LPAD(TO_CHAR(v_pending), 10) ||
             LPAD(TO_CHAR(v_preparing), 11) ||
-            LPAD(TO_CHAR(v_completion_rate, '990.00') || '%', 10)
+            LPAD(
+                TO_CHAR(
+                    v_completion_rate,
+                    'FM990.00'
+                ) || '%',
+                10
+            )
         );
 
 
@@ -236,9 +269,8 @@ BEGIN
             v_grand_delivered + v_delivered;
 
 
-        -- First company has highest rate because cursor
-        -- is ordered by completion rate DESC
-
+        -- First company has highest completion rate because
+        -- cursor is ordered by completion_rate DESC
         IF v_best_company IS NULL THEN
 
             v_best_company := v_company_name;
@@ -247,8 +279,7 @@ BEGIN
         END IF;
 
 
-        -- Lowest completion rate
-
+        -- Find company with lowest completion rate
         IF v_completion_rate < v_worst_rate THEN
 
             v_worst_company := v_company_name;
@@ -273,15 +304,16 @@ BEGIN
 
     IF v_found THEN
 
+        -- Use function again for overall rate
         v_overall_rate :=
-            ROUND(
-                (v_grand_delivered * 100) / v_grand_total,
-                2
+            fn_delivery_completion_rate(
+                v_grand_delivered,
+                v_grand_total
             );
 
 
         DBMS_OUTPUT.PUT_LINE(
-            '=========================================================================='
+            '==========================================================================' 
         );
 
         DBMS_OUTPUT.PUT_LINE(
@@ -289,7 +321,7 @@ BEGIN
         );
 
         DBMS_OUTPUT.PUT_LINE(
-            '=========================================================================='
+            '==========================================================================' 
         );
 
         DBMS_OUTPUT.PUT_LINE(
@@ -304,14 +336,20 @@ BEGIN
 
         DBMS_OUTPUT.PUT_LINE(
             'Overall Completion Rate   : ' ||
-            TO_CHAR(v_overall_rate, '990.00') || '%'
+            TO_CHAR(
+                v_overall_rate,
+                'FM990.00'
+            ) || '%'
         );
 
         DBMS_OUTPUT.PUT_LINE(
             'Best Performing Company   : ' ||
             v_best_company ||
             ' (' ||
-            TO_CHAR(v_best_rate, '990.00') ||
+            TO_CHAR(
+                v_best_rate,
+                'FM990.00'
+            ) ||
             '%)'
         );
 
@@ -319,12 +357,15 @@ BEGIN
             'Lowest Performing Company : ' ||
             v_worst_company ||
             ' (' ||
-            TO_CHAR(v_worst_rate, '990.00') ||
+            TO_CHAR(
+                v_worst_rate,
+                'FM990.00'
+            ) ||
             '%)'
         );
 
         DBMS_OUTPUT.PUT_LINE(
-            '=========================================================================='
+            '==========================================================================' 
         );
 
     ELSE
@@ -345,7 +386,7 @@ BEGIN
     );
 
     DBMS_OUTPUT.PUT_LINE(
-        '=========================================================================='
+        '==========================================================================' 
     );
 
 
