@@ -182,14 +182,14 @@ BEGIN
         IF v_member_id IS NOT NULL AND v_order_total > 0 THEN
             INSERT INTO point_history (
                 point_redemption_id,
-                member_id,
+                order_id,
                 amount,
                 transaction_type,
                 redemption_date
             )
             VALUES (
                 seq_point_history_id.NEXTVAL,
-                v_member_id,
+                p_order_id,
                 TRUNC(v_order_total),
                 'Earned',
                 SYSDATE

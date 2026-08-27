@@ -97,12 +97,10 @@ PROMPT 6. POINT HISTORY AFTER ORDER
 PROMPT ==========================================================
 
 SELECT ph.point_redemption_id,
-       ph.member_id,
+       ph.order_id,
        ph.amount,
        ph.transaction_type,
        ph.redemption_date
 FROM point_history ph
-JOIN orders o
-    ON ph.member_id = o.member_id
-WHERE o.order_id = 100402
+WHERE ph.order_id = 100402
 ORDER BY ph.redemption_date DESC;
