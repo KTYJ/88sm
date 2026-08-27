@@ -44,6 +44,20 @@ CREATE OR REPLACE PROCEDURE rpt_top_members_summary (
 
 BEGIN
 
+    IF p_top_members IS NULL OR p_top_members <= 0 THEN
+        RAISE_APPLICATION_ERROR(
+            -20070,
+            'p_top_members must be greater than zero.'
+        );
+    END IF;
+
+    IF p_top_items IS NULL OR p_top_items <= 0 THEN
+        RAISE_APPLICATION_ERROR(
+            -20070,
+            'p_top_items must be greater than zero.'
+        );
+    END IF;
+
     DBMS_OUTPUT.PUT_LINE(
         '================================================================================'
     );
@@ -117,5 +131,16 @@ BEGIN
         '================================================================================'
     );
 
+EXCEPTION
+    WHEN VALUE_ERROR THEN
+        RAISE_APPLICATION_ERROR(
+            -20071,
+            'Invalid numeric value in rpt_top_members_summary: ' || SQLERRM
+        );
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(
+            -20990,
+            'rpt_top_members_summary failed: ' || SQLERRM
+        );
 END rpt_top_members_summary;
 /
