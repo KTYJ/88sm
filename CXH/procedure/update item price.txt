@@ -1,9 +1,9 @@
 CREATE OR REPLACE PROCEDURE sp_update_item_price (
-    p_i tem_id   IN item.item_id%TYPE,
+    p_item_id   IN item.item_id%TYPE,
     p_new_price IN item.unit_price%TYPE
 )
 IS
-    v_old_price item.unit_price%TYPE;
+    v_old_price   item.unit_price%TYPE;
     v_latest_cost procurement.unit_cost%TYPE;
 
 BEGIN
@@ -40,18 +40,12 @@ BEGIN
 
         SELECT unit_cost
         INTO v_latest_cost
-
         FROM (
-            SELECT
-                unit_cost
-
+            SELECT unit_cost
             FROM procurement
-
             WHERE item_id = p_item_id
-
             ORDER BY procurement_date DESC
         )
-
         WHERE ROWNUM = 1;
 
 
@@ -63,34 +57,12 @@ BEGIN
 
     END;
 
-
-    /* ==========================================
-       4. Compare Selling Price with Cost
-       ========================================== */
-
-    IF v_latest_cost IS NOT NULL
-       AND p_new_price < v_latest_cost THEN
-
-        RAISE_APPLICATION_ERROR(
-            -20011,
-            'New selling price cannot be lower than latest procurement cost of RM' ||
-            TO_CHAR(
-                v_latest_cost,
-                'FM999,999,990.00'
-            )
-        );
-
-    END IF;
-
-
     /* ==========================================
        5. Update Price
        ========================================== */
 
     UPDATE item
-
     SET unit_price = p_new_price
-
     WHERE item_id = p_item_id;
 
 

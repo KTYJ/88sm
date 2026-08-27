@@ -1,3 +1,0 @@
-SELECT *
-FROM member
-WHERE email = 'testmember@gmail.com';

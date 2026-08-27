@@ -1,0 +1,3 @@
+UPDATE vip_renewal
+SET expiry_date = SYSTIMESTAMP - INTERVAL '1' DAY
+WHERE renewal_id = 80144;
