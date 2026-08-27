@@ -1,0 +1,38 @@
+CREATE OR REPLACE VIEW v_top_selling_items AS
+SELECT i.item_id,
+       i.item_name,
+       i.category,
+       NVL(SUM(oi.quantity), 0)                 AS total_units_sold,
+       NVL(SUM(oi.quantity * oi.unit_price), 0) AS total_revenue,
+       COUNT(DISTINCT oi.order_id)              AS times_ordered
+FROM   item i
+LEFT   JOIN order_item oi ON i.item_id = oi.item_id
+GROUP  BY i.item_id, i.item_name, i.category;
+
+SET LINESIZE 180
+SET PAGESIZE 200
+SET FEEDBACK OFF
+SET VERIFY OFF
+
+COLUMN item_id          FORMAT A10 HEADING 'ITEM ID';
+COLUMN item_name        FORMAT A30 HEADING 'ITEM NAME';
+COLUMN category         FORMAT A18 HEADING 'CATEGORY';
+COLUMN total_units_sold FORMAT 999,990 HEADING 'UNITS|SOLD';
+COLUMN total_revenue    FORMAT 999,999,990.99 HEADING 'REVENUE|RM';
+COLUMN times_ordered    FORMAT 999,990 HEADING 'TIMES|ORDERED';
+COLUMN current_price    FORMAT 9990.99 HEADING 'PRICE|NOW';
+
+SELECT v.item_id,
+       v.item_name,
+       v.category,
+       v.total_units_sold,
+       v.total_revenue,
+       v.times_ordered,
+       i.unit_price AS current_price
+FROM   (
+           SELECT *
+           FROM   v_top_selling_items
+           ORDER BY total_units_sold DESC
+       ) v
+JOIN   item i ON v.item_id = i.item_id
+WHERE  ROWNUM <= 10;
