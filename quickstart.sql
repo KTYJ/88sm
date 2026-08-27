@@ -42,19 +42,19 @@ commit;
 @"KHS/trigger/demo/testing_trg_promotion_discount_price.sql"
 commit;
 
-@"CXH/6(trigger)/trigger/Prevent selling below procurement cost.txt"
-@"CXH/6(trigger)/trigger/expiry_trigger.txt"
+@"CXH/trigger/Prevent selling below procurement cost.txt"
+@"CXH/trigger/expiry_trigger.txt"
 
 @"Heng/5_triggers.sql"
 
 
 --functions
-@"CXH/FUCNTION/Member total spending.txt"
+@"CXH/Function/Member total spending.txt"
 
 
 -- create view/query
-@"CXH/2/(1)View/Complete_vw_supplier_performance AS.txt"
-@"CXH/3/(1)View/member purchase behaviour.txt"
+@"CXH/queryview/Complete_vw_supplier_performance AS.txt"
+@"CXH/queryview/member purchase behaviour.txt"
 
 @"KHS/query_view/inventory_turnover_rate.sql"
 @"KHS/query_view/supplier_item_sales.sql"
@@ -72,12 +72,10 @@ commit;
 
 
 -- proc
-@"CXH/5(procedure)/procedure/register new member.txt"
-@"CXH/5(procedure)/procedure/update item price.txt"
-@"CXH/5(procedure)/test/test 1.txt"
-@"CXH/5(procedure)/test/test 2.txt"
-@"CXH/5(procedure)/test/change item price.txt"
-@"CXH/5(procedure)/test/find item.txt"
+@"CXH/procs/register new member.txt"
+@"CXH/procs/update item price.txt"
+@"CXH/procs/member_testing.txt"
+@"CXH/procs/change item price.txt"
 
 @"Heng/4_procedures.sql"
 
@@ -104,6 +102,8 @@ commit;
 --report
 @"CXH/report/Member voucher redemption.txt"
 @"CXH/report/supplier procurement summary.txt"
+@"CXH/report/redemtion_testing.txt"
+@"CXH/report/supplier_testing.txt"
 
 @"Heng/7_reports.sql"
 

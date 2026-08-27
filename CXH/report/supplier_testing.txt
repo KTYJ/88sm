@@ -1,0 +1,3 @@
+SET SERVEROUTPUT ON;
+
+EXEC rpt_supplier_procurement;

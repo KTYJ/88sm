@@ -1,0 +1,9 @@
+SET SERVEROUTPUT ON;
+
+EXEC sp_register_member(
+    'Test Member',
+    '010101-10-1234',
+    'testmember@gmail.com',
+    'Kuala Lumpur',
+    TO_DATE('2001-01-01','YYYY-MM-DD')
+);
