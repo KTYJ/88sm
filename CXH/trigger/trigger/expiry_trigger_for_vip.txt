@@ -1,0 +1,20 @@
+-- 1. VIP Renewal Expiry Date Trigger
+CREATE OR REPLACE TRIGGER trg_vip_renewal_exp_date
+BEFORE INSERT OR UPDATE ON vip_renewal
+FOR EACH ROW
+BEGIN
+    IF :NEW.expiry_date <= :NEW.activation_date THEN
+        RAISE_APPLICATION_ERROR(
+            -20001,
+            'VIP expiry date must be later than the activation date.'
+        );
+    END IF;
+
+    IF :NEW.expiry_date < SYSTIMESTAMP THEN
+        RAISE_APPLICATION_ERROR(
+            -20002,
+            'VIP expiry date cannot be earlier than the current date and time.'
+        );
+    END IF;
+END;
+/

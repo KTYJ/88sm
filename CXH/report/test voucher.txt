@@ -1,5 +1,0 @@
-SELECT
-    member_id,
-    name
-FROM member
-WHERE ROWNUM <= 10;

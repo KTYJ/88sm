@@ -1,3 +1,0 @@
-UPDATE item
-SET unit_price = 0
-WHERE item_id = 1;

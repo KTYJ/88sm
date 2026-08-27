@@ -13,47 +13,55 @@ IS
 
         FROM vw_supplier_performance
 
-        ORDER BY
-            total_procurement_cost DESC;
+        ORDER BY total_procurement_cost DESC;
 
 
-    v_rank NUMBER := 0;
-
+    v_rank        NUMBER := 0;
     v_grand_total NUMBER := 0;
 
 BEGIN
 
+    /* =====================================================
+       REPORT HEADER
+       ===================================================== */
+
     DBMS_OUTPUT.PUT_LINE(
-        RPAD('=', 105, '=')
+        RPAD('=', 110, '=')
     );
 
     DBMS_OUTPUT.PUT_LINE(
-        '88 SPEEDMART - SUPPLIER PROCUREMENT SUMMARY'
+        '                    88 SPEEDMART'
+    );
+
+    DBMS_OUTPUT.PUT_LINE(
+        '              SUPPLIER PROCUREMENT SUMMARY'
     );
 
     DBMS_OUTPUT.PUT_LINE(
         'Generated: ' ||
-        TO_CHAR(
-            SYSDATE,
-            'DD-MON-YYYY HH24:MI'
-        )
+        TO_CHAR(SYSDATE, 'DD-MON-YYYY HH24:MI')
     );
 
     DBMS_OUTPUT.PUT_LINE(
-        RPAD('=', 105, '=')
+        RPAD('=', 110, '=')
     );
+
+
+    /* =====================================================
+       TABLE HEADER
+       ===================================================== */
 
     DBMS_OUTPUT.PUT_LINE(
 
-        RPAD('Rank', 8) ||
+        RPAD('Rank', 7) ||
 
-        RPAD('Supplier', 28) ||
+        RPAD('Supplier', 30) ||
 
         LPAD('Items', 10) ||
 
         LPAD('Branches', 12) ||
 
-        LPAD('Quantity', 14) ||
+        LPAD('Quantity', 16) ||
 
         LPAD('Cost (RM)', 20)
 
@@ -61,8 +69,13 @@ BEGIN
 
 
     DBMS_OUTPUT.PUT_LINE(
-        RPAD('-', 105, '-')
+        RPAD('-', 110, '-')
     );
+
+
+    /* =====================================================
+       SUPPLIER DATA
+       ===================================================== */
 
     FOR r IN c_supplier LOOP
 
@@ -70,49 +83,49 @@ BEGIN
 
         v_grand_total :=
             v_grand_total +
-            r.total_procurement_cost;
+            NVL(r.total_procurement_cost, 0);
 
 
         DBMS_OUTPUT.PUT_LINE(
 
             RPAD(
                 TO_CHAR(v_rank),
-                8
+                7
             ) ||
 
             RPAD(
                 SUBSTR(
                     r.supplier_name,
                     1,
-                    26
+                    28
                 ),
-                28
+                30
             ) ||
 
             LPAD(
                 TO_CHAR(
-                    r.total_items_supplied
+                    NVL(r.total_items_supplied, 0)
                 ),
                 10
             ) ||
 
             LPAD(
                 TO_CHAR(
-                    r.branches_supplied
+                    NVL(r.branches_supplied, 0)
                 ),
                 12
             ) ||
 
             LPAD(
                 TO_CHAR(
-                    r.total_quantity_supplied
+                    NVL(r.total_quantity_supplied, 0)
                 ),
-                14
+                16
             ) ||
 
             LPAD(
                 TO_CHAR(
-                    r.total_procurement_cost,
+                    NVL(r.total_procurement_cost, 0),
                     'FM999,999,990.00'
                 ),
                 20
@@ -122,16 +135,20 @@ BEGIN
 
     END LOOP;
 
-    DBMS_OUTPUT.PUT_LINE(
-        RPAD('-', 105, '-')
-    );
 
+    /* =====================================================
+       TOTAL
+       ===================================================== */
+
+    DBMS_OUTPUT.PUT_LINE(
+        RPAD('-', 110, '-')
+    );
 
     DBMS_OUTPUT.PUT_LINE(
 
         RPAD(
             'TOTAL PROCUREMENT COST',
-            73
+            90
         ) ||
 
         LPAD(
@@ -145,9 +162,8 @@ BEGIN
 
     );
 
-
     DBMS_OUTPUT.PUT_LINE(
-        RPAD('=', 105, '=')
+        RPAD('=', 110, '=')
     );
 
 
@@ -163,9 +179,7 @@ EXCEPTION
 END;
 /
 
-
-
-
-SET SERVEROUTPUT ON;
-
+SET LINESIZE 150
+SET PAGESIZE 50
+SET SERVEROUTPUT ON
 EXEC rpt_supplier_procurement;

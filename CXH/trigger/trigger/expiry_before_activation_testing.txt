@@ -1,0 +1,16 @@
+INSERT INTO vip_renewal
+(
+    renewal_id,
+    member_id,
+    activation_date,
+    expiry_date,
+    renewal_fee
+)
+VALUES
+(
+    9003,
+    1001,
+    SYSTIMESTAMP + INTERVAL '30' DAY,
+    SYSTIMESTAMP + INTERVAL '10' DAY,
+    12.00
+);

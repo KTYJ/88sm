@@ -1,0 +1,3 @@
+SET SERVEROUTPUT ON;
+
+EXEC sp_update_item_price('TA006', 1.00);

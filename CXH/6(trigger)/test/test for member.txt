@@ -1,3 +1,0 @@
-UPDATE member
-SET points_balance = -10
-WHERE member_id = 1;

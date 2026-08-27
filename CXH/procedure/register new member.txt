@@ -7,7 +7,7 @@ CREATE OR REPLACE PROCEDURE sp_register_member (
 )
 IS
     v_member_id NUMBER;
-    v_count NUMBER;
+    v_count     NUMBER;
 
     e_invalid_dob EXCEPTION;
 
@@ -84,7 +84,6 @@ BEGIN
         email,
         address,
         date_of_birth,
-        expiry_date,
         points_balance
     )
     VALUES (
@@ -94,13 +93,12 @@ BEGIN
         p_email,
         p_address,
         p_date_of_birth,
-        ADD_MONTHS(SYSDATE, 12),
         0
     );
 
 
     /* ==========================================
-       6. Display Result
+       6. Display Registration Result
        ========================================== */
 
     DBMS_OUTPUT.PUT_LINE(
@@ -124,15 +122,11 @@ BEGIN
     );
 
     DBMS_OUTPUT.PUT_LINE(
-        'Email     : ' || p_email
+        'IC        : ' || p_ic
     );
 
     DBMS_OUTPUT.PUT_LINE(
-        'Expiry    : ' ||
-        TO_CHAR(
-            ADD_MONTHS(SYSDATE, 12),
-            'DD-MON-YYYY'
-        )
+        'Email     : ' || NVL(p_email, 'Not Provided')
     );
 
     DBMS_OUTPUT.PUT_LINE(
@@ -146,6 +140,10 @@ BEGIN
 
 EXCEPTION
 
+    /* ==========================================
+       Invalid Date of Birth
+       ========================================== */
+
     WHEN e_invalid_dob THEN
 
         RAISE_APPLICATION_ERROR(
@@ -153,6 +151,10 @@ EXCEPTION
             'Date of birth cannot be in the future.'
         );
 
+
+    /* ==========================================
+       Other Errors
+       ========================================== */
 
     WHEN OTHERS THEN
 

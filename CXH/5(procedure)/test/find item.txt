@@ -1,6 +1,0 @@
-SELECT
-    item_id,
-    item_name,
-    unit_price
-FROM item
-WHERE ROWNUM <= 5;
