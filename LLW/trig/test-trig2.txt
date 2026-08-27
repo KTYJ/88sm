@@ -1,0 +1,11 @@
+SELECT stock_quantity INTO v_stock
+    FROM   branch_stock WHERE branch_id = 1001 AND item_id = 'RI001';
+
+UPDATE branch_stock SET stock_quantity = 5
+    WHERE  branch_id = 1001 AND item_id = 'RI001';
+
+SELECT stock_quantity INTO v_stock
+    FROM   branch_stock WHERE branch_id = 1001 AND item_id = 'RI001';
+
+UPDATE branch_stock SET stock_quantity = 219
+    WHERE  branch_id = 1001 AND item_id = 'RI001';

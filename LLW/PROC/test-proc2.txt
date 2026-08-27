@@ -1,0 +1,17 @@
+SELECT COUNT(*) AS redemption_count_before FROM redemption;
+
+INSERT INTO orders (order_id, member_id, staff_id, branch_id, order_date, order_type)
+VALUES (122099, 6001, 4001, 1001, SYSTIMESTAMP, 'In Store');
+COMMIT;
+
+EXEC sp_redeem_voucher('V002', 122099, 6001);
+
+SELECT COUNT(*) AS redemption_count_after FROM redemption;
+SELECT * FROM (SELECT redemption_id, voucher_id, order_id,
+                      TO_CHAR(redeemed_date, 'DD-MM-YYYY HH24:MI:SS') AS redeemed_date
+               FROM redemption ORDER BY redemption_id DESC)
+WHERE ROWNUM = 1;
+
+DELETE FROM redemption WHERE order_id = 122099;
+DELETE FROM orders     WHERE order_id = 122099;
+COMMIT;
