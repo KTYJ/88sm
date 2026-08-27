@@ -98,17 +98,17 @@ BEGIN
         END IF;
     END LOOP;
 
-    SELECT NVL(MAX(order_id), 0) + 1
+    SELECT seq_order_id.NEXTVAL
     INTO   v_order_id
-    FROM   orders;
+    FROM   dual;
 
     INSERT INTO orders (order_id, member_id, staff_id, branch_id, order_date, order_type)
     VALUES (v_order_id, p_member_id, p_staff_id, p_branch_id, SYSDATE, p_order_type);
 
     IF p_order_type = 'Self Pickup' THEN
-        SELECT NVL(MAX(pickup_id), 0) + 1
+        SELECT seq_pickup_id.NEXTVAL
         INTO   v_pickup_id
-        FROM   self_pickup;
+        FROM   dual;
 
         INSERT INTO self_pickup (
             pickup_id,
