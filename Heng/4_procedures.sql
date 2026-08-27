@@ -5,6 +5,12 @@
 -- ------------------------------------------
 -- 4.1 Transfer stock between branches
 -- ------------------------------------------
+-- Exceptions and applications:
+-- -20010: prevents transfers within the same branch.
+-- -20011: rejects zero or negative transfer quantities.
+-- NO_DATA_FOUND / -20012: reports when the item is not stocked at the
+-- source branch instead of exposing an unhandled database error.
+-- -20013: prevents transferring more stock than is available.
 CREATE OR REPLACE PROCEDURE proc_transfer_stock (
     p_from_branch   IN branch_stock.branch_id%TYPE,
     p_to_branch     IN branch_stock.branch_id%TYPE,
@@ -87,6 +93,11 @@ END proc_transfer_stock;
 -- ------------------------------------------
 -- 4.2 Submit stock procurement for a branch / item
 -- ------------------------------------------
+-- Exceptions and applications:
+-- -20020: rejects zero or negative procurement quantities.
+-- -20021: rejects negative supplier unit costs.
+-- Other validation errors from the item, supplier, branch, or stock
+-- inserts are allowed to propagate to preserve database integrity.
 CREATE OR REPLACE PROCEDURE proc_submit_procurement (
     p_branch_id     IN procurement.branch_id%TYPE,
     p_item_id       IN procurement.item_id%TYPE,

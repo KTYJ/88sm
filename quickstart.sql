@@ -12,7 +12,7 @@
 
 @"KHS/index/index.sql"
 
-@"Heng/index.sql"
+@"Heng/index_heng.sql"
 
 @"Ryan/Index.txt"
 
