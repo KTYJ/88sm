@@ -67,8 +67,9 @@ HAVING (br.total_revenue - bc.total_cost) > 0;
 -- ============================================================
 -- QUERY 1: Branch Profitability Report (Last 2 Years)
 -- ============================================================
-SET LINESIZE 120
-SET PAGESIZE 30
+SET LINESIZE 150
+SET PAGESIZE 50
+SET RECSEP OFF
 SET VERIFY OFF
 SET UNDERLINE '='
 SET DEFINE ON

@@ -14,7 +14,8 @@ CREATE OR REPLACE TYPE order_item_list AS TABLE OF order_item_type;
 CREATE OR REPLACE PROCEDURE sp_create_order_items (
     p_order_id       IN order_item.order_id%TYPE,
     p_order_items    IN order_item_list,
-    p_use_voucher    IN NUMBER DEFAULT 0
+    p_use_voucher    IN NUMBER DEFAULT 0,
+    p_vip_discount   IN NUMBER DEFAULT 0  -- 1 = member has active VIP renewal, apply 10% discount
 )
 IS
     v_original_price  item.unit_price%TYPE;
@@ -127,7 +128,16 @@ BEGIN
 
 
         -- ======================================
-        -- 3.5 Prevent negative price
+        -- 3.5 Apply VIP 10% discount (after promo)
+        -- ======================================
+
+        IF p_vip_discount = 1 THEN
+            v_final_price := v_final_price * 0.9;
+        END IF;
+
+
+        -- ======================================
+        -- 3.6 Prevent negative price
         -- ======================================
 
         IF v_final_price < 0 THEN
@@ -136,7 +146,7 @@ BEGIN
 
 
         -- ======================================
-        -- 3.6 Round final price
+        -- 3.7 Round final price
         -- ======================================
 
         v_final_price := ROUND(v_final_price, 2);

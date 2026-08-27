@@ -10,12 +10,6 @@ SET DEFINE OFF;
 -- (nested table) iteration, custom exceptions, RAISE_APPLICATION_ERROR,
 -- NO_DATA_FOUND handling.
 -- =============================================================================
--- 1. Drop the dependent nested table type first
-DROP TYPE order_item_list;
-
--- 2. Drop the base object type second
-DROP TYPE order_item_type;
-
 -- Object type for a single order line (item_id + quantity)
 CREATE OR REPLACE TYPE order_item_type AS OBJECT (
     item_id  VARCHAR2(10),
@@ -50,6 +44,7 @@ CREATE OR REPLACE PROCEDURE proc_place_order (
     v_pickup_id     self_pickup.pickup_id%TYPE;
     v_company_id    delivery_company.company_id%TYPE;
     v_use_voucher   NUMBER := 0;
+    v_vip_discount  NUMBER := 0;  -- 1 if member has active VIP renewal
     v_final_address delivery.delivery_address%TYPE; --for delivery
 
     e_insufficient_stock EXCEPTION;
@@ -98,6 +93,22 @@ BEGIN
         END IF;
     END LOOP;
 
+    -- =========================================================================
+    -- VIP check: active renewal = 10% discount on all items
+    -- =========================================================================
+    IF p_member_id IS NOT NULL THEN
+        SELECT COUNT(*)
+        INTO   v_vip_discount
+        FROM   vip_renewal
+        WHERE  member_id = p_member_id
+          AND  expiry_date >= TRUNC(SYSDATE);
+
+        IF v_vip_discount > 0 THEN
+            v_vip_discount := 1;
+            DBMS_OUTPUT.PUT_LINE('VIP member detected. 10% discount applied.');
+        END IF;
+    END IF;
+
     SELECT seq_order_id.NEXTVAL
     INTO   v_order_id
     FROM   dual;
@@ -138,7 +149,7 @@ BEGIN
         SELECT company_id
         INTO   v_company_id
         FROM   (SELECT company_id FROM delivery_company ORDER BY DBMS_RANDOM.VALUE)
-        WHERE  ROWNUM = 1;下·
+        WHERE  ROWNUM = 1;
 
         sp_create_update_delivery(
             p_order_id   => v_order_id, 
@@ -155,7 +166,8 @@ BEGIN
     sp_create_order_items(
         p_order_id    => v_order_id,
         p_order_items => p_items,
-        p_use_voucher => v_use_voucher
+        p_use_voucher => v_use_voucher,
+        p_vip_discount => v_vip_discount
     );
 
     COMMIT;

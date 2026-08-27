@@ -4,26 +4,19 @@
 @"2_sequence"
 @"3_insert"
 @"4_verify"
-
---create index
+-- INDEX (DONE CHECKED BY KTYJ 28/8/2026)
 @"CXH/index/index.txt"
-
 @"LLW/index/index.txt"
-
 @"KHS/index/index.sql"
-
-@"Heng/index.sql"
-
+@"Heng/index_heng.sql"
 @"Ryan/Index.txt"
-
 @"TJY/index/index_tjy.sql"
 
--- create trigger
+-- TRIGGER (HENG NEEDS CHECKING)
 @"tjy/trigs/trig1.sql"
 @"tjy/trigs/trig2.sql"
 commit;
 @"tjy/trigs/trigger_test.sql"
-
 @"Ryan/(Trigger1)PreventDuplicateVoucherRedemption.txt"
 @"Ryan/(Trigger2)PreventExpiredVoucherRedemption.txt"
 commit;
@@ -32,7 +25,7 @@ commit;
 
 @"LLW/trig/trg_order_item_stock_restore.txt"
 @"LLW/trig/trg_stock_low_alert.txt"
-
+commit;
 @"LLW/trig/test-trg_order_item_stock_restore.txt"
 @"LLW/trig/test-trg_stock_low_alert.txt"
 
@@ -41,23 +34,23 @@ commit;
 commit;
 @"KHS/trigger/demo/demo_trg_member_ic_dob.sql"
 @"KHS/trigger/demo/demo_trg_promotion_discount_price.sql"
+--skip below
 @"KHS/trigger/demo/testing_trg_member_ic_dob.sql"
 @"KHS/trigger/demo/testing_trg_promotion_discount_price.sql"
 commit;
 
-@"CXH/trigger/Prevent selling below procurement cost.txt"
-@"CXH/trigger/expiry_trigger.txt"
+@"CXH/trigger/trigger/Prevent selling below procurement cost.txt"
+@"CXH/trigger/trigger/expiry_trigger_for_vip.txt"
 
 @"Heng/5_triggers.sql"
 
 
---functions
-@"CXH/Function/Member total spending.txt"
+-- FUNCTION (DONE CHECKED BY KTYJ 28/8/2026)
+@"CXH/FUCNTION/Member total spending.txt"
 
-
--- create view/query
-@"CXH/queryview/Complete_vw_supplier_performance AS.txt"
-@"CXH/queryview/member purchase behaviour.txt"
+-- VIEW/QUERY (DONE CHECKED BY KTYJ 28/8/2026)
+@"CXH/viewquery/Complete_vw_supplier_performance AS.txt"
+@"CXH/viewquery/member purchase behaviour.txt"
 
 @"KHS/query_view/inventory_turnover_rate.sql"
 @"KHS/query_view/supplier_item_sales.sql"
@@ -75,10 +68,10 @@ commit;
 
 
 -- proc
-@"CXH/procs/register new member.txt"
-@"CXH/procs/update item price.txt"
-@"CXH/procs/member_testing.txt"
-@"CXH/procs/change item price.txt"
+@"CXH/procedure/register new member.txt"
+@"CXH/procedure/update item price.txt"
+@"CXH/procedure/insert_member.txt"
+@"CXH/procedure/update_new_price_testing.txt"
 
 @"Heng/4_procedures.sql"
 
@@ -108,8 +101,6 @@ commit;
 --report
 @"CXH/report/Member voucher redemption.txt"
 @"CXH/report/supplier procurement summary.txt"
-@"CXH/report/redemtion_testing.txt"
-@"CXH/report/supplier_testing.txt"
 
 @"Heng/7_reports.sql"
 

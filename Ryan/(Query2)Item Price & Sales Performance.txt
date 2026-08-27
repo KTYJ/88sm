@@ -61,7 +61,7 @@ FROM dual;
 -- REPORT TITLE
 -- ============================================================
 
-TTITLE CENTER 'Item Price & Sales Performance Report' SKIP 1 -
+TTITLE CENTER 'Item Price and Sales Performance Report' SKIP 1 -
        CENTER '&v_start_date to &v_end_date' SKIP 1 -
        CENTER 'Top 10 Items by Total Sales' SKIP 1 -
        RIGHT 'Page: ' FORMAT 999 SQL.PNO SKIP 2
