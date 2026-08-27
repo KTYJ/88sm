@@ -1,1 +1,0 @@
-EXEC rpt_member_voucher_redemption(1);
