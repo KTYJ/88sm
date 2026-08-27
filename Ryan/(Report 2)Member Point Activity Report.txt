@@ -12,7 +12,6 @@ SET LINESIZE 120;
 -- Parameter     : Start Date and End Date
 -- =============================================================================
 
-
 CREATE OR REPLACE PROCEDURE rp_member_point_activity (
     p_start_date IN DATE,
     p_end_date   IN DATE
@@ -29,8 +28,10 @@ CREATE OR REPLACE PROCEDURE rp_member_point_activity (
             m.name,
             m.points_balance
         FROM member m
+        JOIN orders o
+            ON m.member_id = o.member_id
         JOIN point_history ph
-            ON m.member_id = ph.member_id
+            ON o.order_id = ph.order_id
         WHERE ph.redemption_date >= p_start_date
           AND ph.redemption_date < p_end_date + 1
         ORDER BY m.member_id;
@@ -50,7 +51,9 @@ CREATE OR REPLACE PROCEDURE rp_member_point_activity (
             ph.amount,
             ph.redemption_date
         FROM point_history ph
-        WHERE ph.member_id = p_member_id
+        JOIN orders o
+            ON ph.order_id = o.order_id
+        WHERE o.member_id = p_member_id
           AND ph.redemption_date >= p_start_date
           AND ph.redemption_date < p_end_date + 1
         ORDER BY ph.redemption_date;
@@ -69,14 +72,14 @@ CREATE OR REPLACE PROCEDURE rp_member_point_activity (
     -- MEMBER SUMMARY VARIABLES
     -- =========================================================================
 
-    v_earned         NUMBER := 0;
-    v_used           NUMBER := 0;
-    v_net_activity   NUMBER := 0;
-    v_transaction_count NUMBER := 0;
+    v_earned              NUMBER := 0;
+    v_used                NUMBER := 0;
+    v_net_activity        NUMBER := 0;
+    v_transaction_count   NUMBER := 0;
 
-    v_total_members  NUMBER := 0;
-    v_total_earned   NUMBER := 0;
-    v_total_used     NUMBER := 0;
+    v_total_members       NUMBER := 0;
+    v_total_earned        NUMBER := 0;
+    v_total_used          NUMBER := 0;
 
 
     -- =========================================================================
@@ -133,7 +136,6 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(
         '========================================================================'
     );
-
 
 
     -- =========================================================================
@@ -201,7 +203,6 @@ BEGIN
 
         -- =====================================================================
         -- INNER CURSOR
-        -- Process each point transaction for the current member.
         -- =====================================================================
 
         FOR r_point IN c_point_history(v_member_id)
@@ -220,10 +221,6 @@ BEGIN
                 )
             );
 
-
-            -- ================================================================
-            -- Calculate member totals
-            -- ================================================================
 
             IF r_point.transaction_type = 'Earned' THEN
 
@@ -351,10 +348,6 @@ BEGIN
     END IF;
 
 
-    -- =========================================================================
-    -- END OF REPORT
-    -- =========================================================================
-
     DBMS_OUTPUT.PUT_LINE(
         '*** End of Report ***'
     );
@@ -365,10 +358,6 @@ BEGIN
 
 
 EXCEPTION
-
-    -- =========================================================================
-    -- DEFAULT EXCEPTION
-    -- =========================================================================
 
     WHEN OTHERS THEN
 
