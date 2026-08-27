@@ -1,3 +1,11 @@
+SET SERVEROUTPUT ON SIZE UNLIMITED
+SET LINESIZE 120
+SET PAGESIZE 1000
+SET FEEDBACK OFF
+SET HEADING OFF
+SET TAB OFF
+
+
 CREATE OR REPLACE PROCEDURE sp_promotion_performance
 (
     p_start_date   IN DATE,
@@ -92,6 +100,11 @@ IS
     v_promotion_total  NUMBER(12,2) := 0;
     v_promotion_qty    NUMBER := 0;
 
+
+    /* ==========================================================
+       FUNCTION 1 - CALCULATE QUANTITY SOLD
+       ========================================================== */
+
     FUNCTION fn_calculate_quantity_sold(
         p_quantity_sold NUMBER,
         p_quantity      NUMBER
@@ -101,6 +114,9 @@ IS
         RETURN p_quantity_sold + p_quantity;
     END fn_calculate_quantity_sold;
 
+    /* ==========================================================
+       FUNCTION 2 - CALCULATE SALES REVENUE
+       ========================================================== */
 
     FUNCTION fn_calculate_sales_revenue(
         p_current_revenue NUMBER,
@@ -113,6 +129,9 @@ IS
                (p_quantity * p_unit_price);
     END fn_calculate_sales_revenue;
 
+    /* ==========================================================
+       FUNCTION 3 - CALCULATE ORDER COUNT
+       ========================================================== */
 
     FUNCTION fn_calculate_order_count(
         p_order_count NUMBER
@@ -154,26 +173,26 @@ BEGIN
        ========================================================== */
 
     DBMS_OUTPUT.PUT_LINE(
-        '================================================================================'
+        '==================================================================================================='
     );
 
     DBMS_OUTPUT.PUT_LINE(
-        '                    PROMOTION PERFORMANCE REPORT'
+        '                         PROMOTION PERFORMANCE REPORT'
     );
 
     DBMS_OUTPUT.PUT_LINE(
-        '================================================================================'
+        '==================================================================================================='
     );
 
     DBMS_OUTPUT.PUT_LINE(
-        'Period: ' ||
+        'Period : ' ||
         TO_CHAR(p_start_date, 'DD-MM-YYYY') ||
         ' to ' ||
         TO_CHAR(p_end_date, 'DD-MM-YYYY')
     );
 
     DBMS_OUTPUT.PUT_LINE(
-        '================================================================================'
+        '==================================================================================================='
     );
 
 
@@ -199,35 +218,47 @@ BEGIN
         v_promotion_total := 0;
 
 
+        /* ======================================================
+           PROMOTION INFORMATION
+           ====================================================== */
+
         DBMS_OUTPUT.PUT_LINE('');
 
         DBMS_OUTPUT.PUT_LINE(
-            'Promotion ID   : ' || v_promotion_id
+            'Promotion ID   : ' ||
+            v_promotion_id
         );
 
         DBMS_OUTPUT.PUT_LINE(
-            'Promotion Name : ' || v_promotion_name
+            'Promotion Name : ' ||
+            v_promotion_name
         );
 
         DBMS_OUTPUT.PUT_LINE(
-            'Status         : ' || v_status
+            'Status         : ' ||
+            v_status
         );
 
         DBMS_OUTPUT.PUT_LINE(
-            '--------------------------------------------------------------------------------'
+            '---------------------------------------------------------------------------------------------------'
         );
+
+
+        /* ======================================================
+           TABLE HEADER
+           ====================================================== */
 
         DBMS_OUTPUT.PUT_LINE(
             RPAD('Item ID', 10) ||
-            RPAD('Item Name', 22) ||
-            RPAD('Discount Type', 18) ||
-            RPAD('Discount Value', 16) ||
+            RPAD('Item Name', 24) ||
+            RPAD('Discount Type', 20) ||
+            LPAD('Discount Value', 16) ||
             LPAD('Qty Sold', 10) ||
-            LPAD('Revenue (RM)', 15)
+            LPAD('Revenue (RM)', 16)
         );
 
         DBMS_OUTPUT.PUT_LINE(
-            '--------------------------------------------------------------------------------'
+            '---------------------------------------------------------------------------------------------------'
         );
 
 
@@ -263,8 +294,8 @@ BEGIN
 
                 FETCH c_order_item
                 INTO v_order_id,
-                    v_quantity,
-                    v_unit_price;
+                     v_quantity,
+                     v_unit_price;
 
                 EXIT WHEN c_order_item%NOTFOUND;
 
@@ -310,12 +341,44 @@ BEGIN
                ================================================== */
 
             DBMS_OUTPUT.PUT_LINE(
-                RPAD(v_item_id, 10) ||
-                RPAD(SUBSTR(v_item_name, 1, 22), 22) ||
-                RPAD(v_discount_type, 18) ||
-                RPAD(TO_CHAR(v_discount_value, '999,990.00'), 16) ||
-                LPAD(v_quantity_sold, 10) ||
-                LPAD(TO_CHAR(v_sales_revenue, '999,990.00'), 15)
+                RPAD(
+                    TO_CHAR(v_item_id),
+                    10
+                ) ||
+
+                RPAD(
+                    SUBSTR(v_item_name, 1, 24),
+                    24
+                ) ||
+
+                RPAD(
+                    SUBSTR(v_discount_type, 1, 20),
+                    20
+                ) ||
+
+                LPAD(
+                    TO_CHAR(
+                        v_discount_value,
+                        'FM999,990.00'
+                    ),
+                    16
+                ) ||
+
+                LPAD(
+                    TO_CHAR(
+                        v_quantity_sold,
+                        'FM999,990'
+                    ),
+                    10
+                ) ||
+
+                LPAD(
+                    TO_CHAR(
+                        v_sales_revenue,
+                        'FM999,990.00'
+                    ),
+                    16
+                )
             );
 
         END LOOP;
@@ -328,19 +391,22 @@ BEGIN
            ====================================================== */
 
         DBMS_OUTPUT.PUT_LINE(
-            '--------------------------------------------------------------------------------'
+            '---------------------------------------------------------------------------------------------------'
         );
 
         DBMS_OUTPUT.PUT_LINE(
             'Promotion Total Quantity : ' ||
-            v_promotion_qty
+            TO_CHAR(
+                v_promotion_qty,
+                'FM999,990'
+            )
         );
 
         DBMS_OUTPUT.PUT_LINE(
             'Promotion Total Revenue : RM' ||
             TO_CHAR(
                 v_promotion_total,
-                '999,990.00'
+                'FM999,990.00'
             )
         );
 
@@ -349,18 +415,22 @@ BEGIN
     CLOSE c_promotion;
 
 
+    /* ==========================================================
+       9. REPORT FOOTER
+       ========================================================== */
+
     DBMS_OUTPUT.PUT_LINE('');
 
     DBMS_OUTPUT.PUT_LINE(
-        '================================================================================'
+        '==================================================================================================='
     );
 
     DBMS_OUTPUT.PUT_LINE(
-        '                         END OF REPORT'
+        '                              END OF REPORT'
     );
 
     DBMS_OUTPUT.PUT_LINE(
-        '================================================================================'
+        '==================================================================================================='
     );
 
 

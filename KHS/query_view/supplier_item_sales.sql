@@ -77,6 +77,4 @@ ORDER BY
     quantity_sold DESC;
 
 
-PROMPT =================================================================
-
 SET FEEDBACK ON

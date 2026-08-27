@@ -9,7 +9,7 @@ BEGIN
     sp_promotion_performance(
         p_start_date   => DATE '2026-07-01',
         p_end_date     => DATE '2026-07-31',
-        p_promotion_id => 5033
+        p_promotion_id => 5015
     );
 END;
 /
