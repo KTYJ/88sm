@@ -2,70 +2,9 @@
 -- 5. TRIGGERS
 -- ==========================================
 
--- ------------------------------------------
--- 5.1 Block expired members from placing orders or
--- earning/redeeming points
--- ------------------------------------------
--- Exceptions and applications:
--- -20030: prevents an expired member from inserting an order.
-CREATE OR REPLACE TRIGGER trg_block_expired_member_order
-BEFORE INSERT ON orders
-FOR EACH ROW
-DECLARE
-    v_expiry_date vip_renewal.expiry_date%TYPE;
-BEGIN
-    IF :NEW.member_id IS NOT NULL THEN
-        SELECT MAX(expiry_date) INTO v_expiry_date
-        FROM vip_renewal
-        WHERE member_id = :NEW.member_id;
-
-        IF v_expiry_date IS NOT NULL AND v_expiry_date < TRUNC(SYSDATE) THEN
-            RAISE_APPLICATION_ERROR(-20030, 'Cannot place order: member ' || :NEW.member_id ||
-                                     ' membership expired on ' || TO_CHAR(v_expiry_date, 'DD-MON-YYYY') || '.');
-        END IF;
-    END IF;
-END trg_block_expired_member_order;
-/
-
-CREATE OR REPLACE TRIGGER trg_expired_member_points
-BEFORE INSERT ON point_history
-FOR EACH ROW
--- Exception and application:
--- -20033: prevents an expired member from earning or using points.
-DECLARE
-    v_member_id orders.member_id%TYPE;
-    v_expiry_date vip_renewal.expiry_date%TYPE;
-BEGIN
-    IF :NEW.order_id IS NOT NULL THEN
-        SELECT member_id INTO v_member_id
-        FROM orders
-        WHERE order_id = :NEW.order_id;
-
-        IF v_member_id IS NOT NULL THEN
-            SELECT MAX(expiry_date) INTO v_expiry_date
-            FROM vip_renewal
-            WHERE member_id = v_member_id;
-        END IF;
-    END IF;
-
-    IF v_member_id IS NOT NULL
-       AND v_expiry_date IS NOT NULL
-       AND v_expiry_date < TRUNC(SYSDATE) THEN
-        RAISE_APPLICATION_ERROR(-20033, 'Cannot ' ||
-                                 CASE :NEW.transaction_type
-                                     WHEN 'Earned' THEN 'earn'
-                                     WHEN 'Used'   THEN 'redeem'
-                                     ELSE LOWER(:NEW.transaction_type)
-                                 END ||
-                                 ' points: member ' || v_member_id ||
-                                 ' membership expired on ' || TO_CHAR(v_expiry_date, 'DD-MON-YYYY') || '.');
-    END IF;
-END trg_expired_member_points;
-/
-
 
 -- ------------------------------------------
--- 5.2 DOB check on member (user) creation - must be at least 12 years old
+-- 5.1 DOB check on member (user) creation - must be at least 12 years old
 -- ------------------------------------------
 -- Exceptions and applications:
 -- -20031: rejects a future date of birth.
@@ -84,4 +23,41 @@ BEGIN
         END IF;
     END IF;
 END trg_member_dob_check;
+/
+
+-- ------------------------------------------
+-- 5.2 Prevent outdated VIP renewals
+-- ------------------------------------------
+-- Exceptions and applications:
+-- -20033: rejects VIP renewals with an expiry date in the past.
+-- -20034: rejects VIP renewals where expiry is before activation.
+-- -20036: rejects VIP renewals that downgrade an existing longer expiry.
+CREATE OR REPLACE TRIGGER trg_vip_outdated_renewal
+BEFORE INSERT ON vip_renewal
+FOR EACH ROW
+DECLARE
+    v_current_max_expiry DATE;
+BEGIN
+    -- 1. Expiry must not be in the past
+    IF :NEW.expiry_date < TRUNC(SYSDATE) THEN
+        RAISE_APPLICATION_ERROR(-20033, 'Cannot create an outdated VIP renewal with an expiry date in the past.');
+    END IF;
+
+    -- 2. Expiry must be after activation
+    IF :NEW.expiry_date <= :NEW.activation_date THEN
+        RAISE_APPLICATION_ERROR(-20034, 'VIP renewal expiry date must be after the activation date.');
+    END IF;
+
+    -- 3. New expiry must extend beyond current max expiry (no downgrade)
+    SELECT MAX(expiry_date) INTO v_current_max_expiry
+    FROM vip_renewal
+    WHERE member_id = :NEW.member_id;
+
+    IF v_current_max_expiry IS NOT NULL AND :NEW.expiry_date <= v_current_max_expiry THEN
+        RAISE_APPLICATION_ERROR(-20036,
+            'New VIP expiry date must exceed current expiry (' ||
+            TO_CHAR(v_current_max_expiry, 'DD-MON-YYYY') || ').');
+    END IF;
+
+END trg_vip_outdated_renewal;
 /
